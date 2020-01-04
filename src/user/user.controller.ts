@@ -1,4 +1,11 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from 'src/entities/user.entity';
 import { Group } from 'src/entities/group.entity';
@@ -10,6 +17,14 @@ export class UserController {
   @Post()
   craeteUser(): Promise<User> {
     return this.userService.createUser();
+  }
+
+  @Get('/groups/:groupId')
+  getGroupById(
+    @Param('groupId', ParseIntPipe) groupId: number,
+    @Body('userId') userId: number,
+  ): Promise<Group> {
+    return this.userService.getGroupById(userId, groupId);
   }
 
   @Get('/groups')

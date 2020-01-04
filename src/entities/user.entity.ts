@@ -15,9 +15,6 @@ export class User extends BaseEntity {
   @ManyToMany(
     type => Group,
     group => group.participants,
-    {
-      eager: true,
-    },
   )
   groups: Group[];
 }
