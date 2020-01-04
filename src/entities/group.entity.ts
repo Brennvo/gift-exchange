@@ -14,13 +14,13 @@ export class Group extends BaseEntity {
   id: number;
 
   @Column()
-  owner: number;
+  ownerId: number;
 
   @Column()
   groupName: string;
 
   @Column()
-  vote_end_dt: Date;
+  voteEndDt: Date;
 
   @ManyToMany(
     type => User,
