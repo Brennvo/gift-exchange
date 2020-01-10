@@ -9,58 +9,62 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { UpdateGroupDTO } from './dto/update-group.dto';
+import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
 
 @Injectable()
 export class GroupService {
   async createGroup(createGroupDto: CreateGroupDTO): Promise<Group> {
-    const { userId, groupName, voteEndDt, participants } = createGroupDto;
+    const { userId, groupName, voteEndDt } = createGroupDto;
+    const owner = await User.findOne(userId);
     const group = new Group();
     group.groupName = groupName;
-    // TODO: Update owner to user attached to req.body from Passport
-    group.ownerId = userId;
     group.voteEndDt = new Date(voteEndDt);
-    const userParticipants = await User.findByIds([userId, ...participants]);
-
-    group.participants = userParticipants;
-
+    // TODO: Update owner to user attached to req.body from Passport
+    group.owner = owner;
     const newGroup = await group.save();
+
+    const userPoll = new UserGroupPoll();
+    userPoll.user = owner;
+    userPoll.groupId = newGroup.id;
+    await userPoll.save();
+
     return newGroup;
   }
 
-  async updateGroup(
-    groupId: number,
-    updateGroupDto: UpdateGroupDTO,
-  ): Promise<Group> {
-    const { groupName, voteEndDt, participants, ownerId } = updateGroupDto;
+  // async updateGroup(
+  //   groupId: number,
+  //   updateGroupDto: UpdateGroupDTO,
+  // ): Promise<Group> {
+  //   const { groupName, voteEndDt, participants, ownerId } = updateGroupDto;
 
-    const foundGroup = await Group.findOne(groupId);
+  //   const foundGroup = await Group.findOne(groupId);
 
-    console.log('found group owner: ', foundGroup.ownerId);
-    console.log('USER ID IN REQ: ', ownerId);
-    if (foundGroup.ownerId != ownerId) {
-      throw new UnauthorizedException();
-    }
+  //   console.log('found group owner: ', foundGroup.ownerId);
+  //   console.log('USER ID IN REQ: ', ownerId);
+  //   if (foundGroup.ownerId != ownerId) {
+  //     throw new UnauthorizedException();
+  //   }
 
-    if (!foundGroup) {
-      throw new NotFoundException(`Group with ID ${groupId} not found.`);
-    }
+  //   if (!foundGroup) {
+  //     throw new NotFoundException(`Group with ID ${groupId} not found.`);
+  //   }
 
-    if (groupName) {
-      foundGroup.groupName = groupName;
-    }
+  //   if (groupName) {
+  //     foundGroup.groupName = groupName;
+  //   }
 
-    if (voteEndDt) {
-      foundGroup.voteEndDt = voteEndDt;
-    }
+  //   if (voteEndDt) {
+  //     foundGroup.voteEndDt = voteEndDt;
+  //   }
 
-    if (participants) {
-      const updatedParticipants = await User.findByIds([
-        foundGroup.ownerId,
-        ...participants,
-      ]);
-      foundGroup.participants = updatedParticipants;
-    }
+  //   if (participants) {
+  //     const updatedParticipants = await User.findByIds([
+  //       foundGroup.ownerId,
+  //       ...participants,
+  //     ]);
+  //     foundGroup.participants = updatedParticipants;
+  //   }
 
-    return await foundGroup.save();
-  }
+  //   return await foundGroup.save();
+  // }
 }
