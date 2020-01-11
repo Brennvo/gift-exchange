@@ -4,9 +4,10 @@ import { GroupService } from './group.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Group } from 'src/entities/group.entity';
 import { User } from 'src/entities/user.entity';
+import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Group, User])],
+  imports: [TypeOrmModule.forFeature([Group, User, UserGroupPoll])],
   controllers: [GroupController],
   providers: [GroupService],
 })

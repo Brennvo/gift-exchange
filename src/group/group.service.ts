@@ -16,7 +16,11 @@ import { UserService } from 'src/user/user.service';
 export class GroupService {
   constructor(
     @InjectRepository(User)
-    private readonly userRepository,
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Group)
+    private readonly groupRepository: Repository<Group>,
+    @InjectRepository(UserGroupPoll)
+    private readonly userGroupPollRepository: Repository<UserGroupPoll>,
   ) {}
 
   async createGroup(createGroupDto: CreateGroupDTO): Promise<Group> {
@@ -27,12 +31,13 @@ export class GroupService {
     group.voteEndDt = new Date(voteEndDt);
     // TODO: Update owner to user attached to req.body from Passport
     group.owner = owner;
-    const newGroup = await group.save();
+    const newGroup = await this.groupRepository.save(group);
 
+    // Create a poll for this user (owner) in the group
     const userPoll = new UserGroupPoll();
     userPoll.user = owner;
     userPoll.groupId = newGroup.id;
-    await userPoll.save();
+    await this.userGroupPollRepository.save(userPoll);
 
     return newGroup;
   }

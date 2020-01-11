@@ -1,9 +1,6 @@
 import {
-  BaseEntity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToMany,
-  JoinTable,
   Entity,
   OneToMany,
   ManyToOne,
@@ -13,7 +10,7 @@ import { User } from './user.entity';
 import { UserGroupPoll } from './user-group-poll.entity';
 
 @Entity()
-export class Group extends BaseEntity {
+export class Group {
   @PrimaryGeneratedColumn()
   id: number;
 
