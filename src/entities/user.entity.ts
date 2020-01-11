@@ -13,6 +13,9 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column()
+  googleId: string;
+
   @OneToMany(
     type => Group,
     group => group.owner,

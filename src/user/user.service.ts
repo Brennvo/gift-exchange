@@ -1,19 +1,27 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { User } from 'src/entities/user.entity';
 import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
-import { createQueryBuilder } from 'typeorm';
+import { createQueryBuilder, Repository } from 'typeorm';
 import { Group } from 'src/entities/group.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CreateUserDTO } from './dto/createUser.dto';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectRepository(User) private userRepository) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
-  async createUser(): Promise<User> {
-    const newUser = this.userRepository.create();
+  async createUser(createUserDto: CreateUserDTO): Promise<User> {
+    const newUser = await this.userRepository.create(createUserDto);
     await this.userRepository.save(newUser);
 
     return newUser;
+  }
+
+  async findByGoogleId(googleId) {
+    return this.userRepository.findOne({ googleId });
   }
 
   // async getGroupById(userId: number, groupId: number): Promise<Group> {
