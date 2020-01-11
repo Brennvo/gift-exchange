@@ -16,6 +16,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
 
   validate(accessToken, refreshToken, profile, cb) {
     const user = {
+      googleId: profile.id,
       name: profile.displayName,
     };
     return user;
