@@ -1,22 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-google-oauth20';
+import { Strategy } from 'passport-facebook';
 import { keys } from 'src/config/keys';
 
 @Injectable()
-export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
   constructor() {
     super({
-      clientID: keys.google.id,
-      clientSecret: keys.google.secret,
-      callbackURL: 'http://localhost:3000/auth/google/callback',
-      scope: ['email', 'profile'],
+      clientID: keys.facebook.id,
+      clientSecret: keys.facebook.secret,
+      callbackURL: 'http://localhost:3000/auth/facebook/callback',
     });
   }
 
   validate(accessToken, refreshToken, profile, cb) {
     const user = {
-      googleId: profile.id,
+      facebookId: profile.id,
       username: profile.displayName,
     };
     return user;
