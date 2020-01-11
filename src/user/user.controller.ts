@@ -15,10 +15,10 @@ import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post()
-  craeteUser(): Promise<User> {
-    return this.userService.createUser();
-  }
+  // @Post()
+  // craeteUser(): Promise<User> {
+  //   return this.userService.createUser();
+  // }
 
   // @Get('/groups/:groupId')
   // getGroupById(

@@ -10,12 +10,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { UpdateGroupDTO } from './dto/update-group.dto';
 import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class GroupService {
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository,
+  ) {}
+
   async createGroup(createGroupDto: CreateGroupDTO): Promise<Group> {
     const { userId, groupName, voteEndDt } = createGroupDto;
-    const owner = await User.findOne(userId);
+    const owner = await this.userRepository.findOne(userId);
     const group = new Group();
     group.groupName = groupName;
     group.voteEndDt = new Date(voteEndDt);
