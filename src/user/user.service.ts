@@ -24,6 +24,10 @@ export class UserService {
     return this.userRepository.findOne({ googleId });
   }
 
+  async findByFacebookId(facebookId) {
+    return this.userRepository.findOne({ facebookId });
+  }
+
   // async getGroupById(userId: number, groupId: number): Promise<Group> {
   //   const foundGroup = await Group.findOne({
   //     where: { id: groupId },

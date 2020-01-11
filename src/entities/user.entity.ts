@@ -13,8 +13,14 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   googleId: string;
+
+  @Column({ nullable: true })
+  facebookId: string;
+
+  @Column()
+  username: string;
 
   @OneToMany(
     type => Group,

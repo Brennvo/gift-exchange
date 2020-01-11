@@ -12,10 +12,7 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  gooogleLogin(@Body() body) {
-    // initiate google oauth login flow
-    console.log('Body is: ', body);
-  }
+  gooogleLogin(@Body() body): void {}
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
@@ -23,9 +20,33 @@ export class AuthController {
     const user = await this.userService.findByGoogleId(req.user.googleId);
 
     if (!user) {
-      this.userService.createUser({ googleId: req.user.googleId });
+      this.userService.createUser({
+        username: req.user.username,
+        facebookId: null,
+        googleId: req.user.googleId,
+      });
     }
 
-    return ` Hello, ${req.user.name}`;
+    return `Hello, ${req.user.username}`;
+  }
+
+  @Get('facebook')
+  @UseGuards(AuthGuard('facebook'))
+  facebookLogin(@Body() body): void {}
+
+  @Get('facebook/callback')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookCallback(@Req() req) {
+    const user = await this.userService.findByFacebookId(req.user.facebookId);
+
+    if (!user) {
+      this.userService.createUser({
+        username: req.user.username,
+        googleId: null,
+        facebookId: req.user.facebookId,
+      });
+    }
+
+    return `Hello, ${req.user.username}`;
   }
 }
