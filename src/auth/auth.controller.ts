@@ -17,6 +17,6 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   callback(@Req() req) {
     console.log('req from callback: ', req.user);
-    return ` Hello, ${req.user.displayName}`;
+    return ` Hello, ${req.user.name}`;
   }
 }
