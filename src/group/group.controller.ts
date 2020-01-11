@@ -25,12 +25,12 @@ export class GroupController {
     return this.groupService.createGroup(createGroupDto);
   }
 
-  @Patch('/:groupId')
-  @UsePipes(ValidationPipe)
-  updateGroup(
-    @Param('groupId', ParseIntPipe) groupId: number,
-    @Body() updateGroupDto: UpdateGroupDTO,
-  ): Promise<Group> {
-    return this.groupService.updateGroup(groupId, updateGroupDto);
-  }
+  // @Patch('/:groupId')
+  // @UsePipes(ValidationPipe)
+  // updateGroup(
+  //   @Param('groupId', ParseIntPipe) groupId: number,
+  //   @Body() updateGroupDto: UpdateGroupDTO,
+  // ): Promise<Group> {
+  //   return this.groupService.updateGroup(groupId, updateGroupDto);
+  // }
 }

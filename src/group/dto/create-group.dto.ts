@@ -10,7 +10,4 @@ export class CreateGroupDTO {
 
   @IsNotEmpty()
   voteEndDt: Date;
-
-  @IsNotEmpty()
-  participants: Array<number>;
 }

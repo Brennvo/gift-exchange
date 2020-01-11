@@ -5,8 +5,12 @@ import {
   ManyToMany,
   JoinTable,
   Entity,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { User } from './user.entity';
+import { UserGroupPoll } from './user-group-poll.entity';
 
 @Entity()
 export class Group extends BaseEntity {
@@ -14,21 +18,23 @@ export class Group extends BaseEntity {
   id: number;
 
   @Column()
-  ownerId: number;
-
-  @Column()
   groupName: string;
 
   @Column()
   voteEndDt: Date;
 
-  @ManyToMany(
+  @Column()
+  ownerId: number;
+  @ManyToOne(
     type => User,
-    user => user.groups,
-    {
-      cascade: true,
-    },
+    user => user.adminGroups,
   )
-  @JoinTable()
-  participants: Array<User>;
+  @JoinColumn({ name: 'ownerId' })
+  owner: User;
+
+  @OneToMany(
+    type => UserGroupPoll,
+    userGroupPoll => userGroupPoll.group,
+  )
+  userPolls: UserGroupPoll[];
 }
