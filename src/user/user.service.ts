@@ -4,16 +4,12 @@ import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
 import { createQueryBuilder } from 'typeorm';
 import { Group } from 'src/entities/group.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserRepository } from 'src/user/user.repository';
-import { CreateUserDTO } from './dto/createUser.dto';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @InjectRepository(UserRepository) private userRepository: UserRepository,
-  ) {}
+  constructor(@InjectRepository(User) private userRepository) {}
 
-  async createUser(createUserDto: CreateUserDTO): Promise<User> {
+  async createUser(): Promise<User> {
     const newUser = this.userRepository.create();
     await this.userRepository.save(newUser);
 
