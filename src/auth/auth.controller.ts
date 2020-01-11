@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Body } from '@nestjs/common';
+import { Controller, Get, UseGuards, Body, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { GoogleStrategy } from './strategies/google.strategy';
 
@@ -8,9 +8,15 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  login(@Body() body) {}
+  gooogleLogin(@Body() body) {
+    // initiate google oauth login flow
+    console.log('Body is: ', body);
+  }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  callback(res) {}
+  callback(@Req() req) {
+    console.log('req from callback: ', req.user);
+    return ` Hello, ${req.user.name}`;
+  }
 }
