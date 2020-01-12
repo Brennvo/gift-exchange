@@ -1,13 +1,14 @@
 import { Controller, Get, UseGuards, Body, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { GoogleStrategy } from './strategies/google.strategy';
 import { UserService } from 'src/user/user.service';
+import { AuthService } from './auth.service';
+import { User } from 'src/entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
   constructor(
-    private readonly googleService: GoogleStrategy,
     private readonly userService: UserService,
+    private readonly authService: AuthService,
   ) {}
 
   @Get('google')
@@ -17,17 +18,23 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async callback(@Req() req) {
-    const user = await this.userService.findByGoogleId(req.user.googleId);
+    const user: User = await this.userService.findByGoogleId(req.user.googleId);
 
+    let userId;
     if (!user) {
-      this.userService.createUser({
+      const newUser = await this.userService.createUser({
         username: req.user.username,
         facebookId: null,
         googleId: req.user.googleId,
       });
+      userId = newUser.id;
+    } else {
+      userId = user.id;
     }
 
-    return `Hello, ${req.user.username}`;
+    const payload = { userId };
+
+    return await this.authService.signJwt(payload);
   }
 
   @Get('facebook')
@@ -39,14 +46,20 @@ export class AuthController {
   async facebookCallback(@Req() req) {
     const user = await this.userService.findByFacebookId(req.user.facebookId);
 
+    let userId;
     if (!user) {
-      this.userService.createUser({
+      const newUser = await this.userService.createUser({
         username: req.user.username,
         googleId: null,
         facebookId: req.user.facebookId,
       });
+      userId = newUser.id;
+    } else {
+      userId = user.id;
     }
 
-    return `Hello, ${req.user.username}`;
+    const payload = { userId };
+
+    return await this.authService.signJwt(payload);
   }
 }
