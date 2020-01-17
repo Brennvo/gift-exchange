@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CreateGroupDTO } from './dto/create-group.dto';
 import { Group } from 'src/entities/group.entity';
 import { Repository } from 'typeorm';
@@ -45,7 +50,12 @@ export class GroupService {
           groupId,
         },
       )
-      .select(['group.groupName', 'group.voteEndDt', 'userPolls.id'])
+      .select([
+        'group.groupName',
+        'group.ownerId',
+        'group.voteEndDt',
+        'userPolls.id',
+      ])
       .innerJoinAndSelect('userPolls.user', 'user')
       .getOne();
 
@@ -86,6 +96,15 @@ export class GroupService {
       throw new NotFoundException(`Group not found`);
     }
 
+    // Check if user is already in group
+    const groupPolls = await this.userGroupPollRepository.find({
+      where: { groupId },
+    });
+
+    if (groupPolls.some(poll => poll.userId === user.id)) {
+      throw new BadRequestException('User already in group.');
+    }
+
     // Create a new user poll
     const newUserPoll = this.userGroupPollRepository.create({
       group,
@@ -93,6 +112,66 @@ export class GroupService {
     });
     await this.userGroupPollRepository.save(newUserPoll);
     return group;
+  }
+
+  async updateGroup(user, groupId, updateGroupDto): Promise<Group> {
+    const {
+      groupName,
+      voteEndDt,
+      newParticipants,
+      removedParticipants,
+    } = updateGroupDto;
+
+    const group = await this.groupRepository.findOne(groupId);
+
+    if (!group) {
+      throw new NotFoundException();
+    }
+
+    // Authorize if user is owner and can edit group
+    if (group.ownerId !== user.id) {
+      throw new UnauthorizedException();
+    }
+
+    if (groupName) {
+      group.groupName = groupName;
+    }
+
+    if (voteEndDt) {
+      // TODO: validate so not date in past
+      group.voteEndDt = voteEndDt;
+    }
+
+    if (newParticipants) {
+      // Create array of user poll data
+      const newData = newParticipants.map(newParticipantId => ({
+        userId: newParticipantId,
+        groupId,
+      }));
+
+      // Create new user polls
+      await this.userGroupPollRepository
+        .createQueryBuilder()
+        .insert()
+        .values(newData)
+        .execute();
+    }
+
+    if (removedParticipants) {
+      if (removedParticipants.includes(group.ownerId)) {
+        throw new BadRequestException('Cannot remove owner from group');
+      }
+
+      removedParticipants.forEach(async participantId => {
+        await this.userGroupPollRepository
+          .createQueryBuilder()
+          .delete()
+          .where('userId = :userId', { userId: participantId })
+          .execute();
+      });
+    }
+
+    return await this.groupRepository.save(group);
   }
 
   // async updateGroup(

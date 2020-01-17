@@ -29,7 +29,10 @@ export class GroupController {
   }
 
   @Get('/:groupId')
-  getGroup(@Request() req, @Param('groupId') groupId): Promise<any> {
+  getGroup(
+    @Request() req,
+    @Param('groupId', ParseIntPipe) groupId,
+  ): Promise<any> {
     return this.groupService.getGroupById(req.user, groupId);
   }
 
@@ -42,8 +45,17 @@ export class GroupController {
     return this.groupService.createGroup(req.user, createGroupDto);
   }
 
-  @Patch(':id/join')
-  joinGroup(@Request() req, @Param('id') id): Promise<Group> {
+  @Patch('/:id')
+  updateGroup(
+    @Request() req,
+    @Param('id', ParseIntPipe) id,
+    @Body() updateGroupDto: UpdateGroupDTO,
+  ): Promise<Group> {
+    return this.groupService.updateGroup(req.user, id, updateGroupDto);
+  }
+
+  @Patch('/:id/join')
+  joinGroup(@Request() req, @Param('id', ParseIntPipe) id): Promise<Group> {
     return this.groupService.joinGroup(req.user, id);
   }
 
