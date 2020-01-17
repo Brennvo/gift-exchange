@@ -12,4 +12,9 @@ export class AuthService {
   async signJwt(payload) {
     return this.jwtService.sign(payload);
   }
+
+  async validatePayload(payload) {
+    const { userId } = payload;
+    return await this.userService.findById(userId)
+  }
 }

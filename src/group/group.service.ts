@@ -23,9 +23,9 @@ export class GroupService {
     private readonly userGroupPollRepository: Repository<UserGroupPoll>,
   ) {}
 
-  async createGroup(createGroupDto: CreateGroupDTO): Promise<Group> {
-    const { userId, groupName, voteEndDt } = createGroupDto;
-    const owner = await this.userRepository.findOne(userId);
+  async createGroup(user, createGroupDto: CreateGroupDTO): Promise<Group> {
+    const { groupName, voteEndDt } = createGroupDto;
+    const owner = await this.userRepository.findOne(user.id);
     const group = new Group();
     group.groupName = groupName;
     group.voteEndDt = new Date(voteEndDt);
@@ -40,6 +40,46 @@ export class GroupService {
     await this.userGroupPollRepository.save(userPoll);
 
     return newGroup;
+  }
+
+  async getUserGroups(user): Promise<Group[]> {
+    console.log('user in group service: ', user);
+    const { id: userId } = user;
+
+    const groups = await this.groupRepository
+      .createQueryBuilder('group')
+      .innerJoin('group.userPolls', 'userPoll', 'userPoll.userId = :userId', {
+        userId,
+      })
+      .getMany();
+
+    return groups;
+  }
+
+  async getGroupById(user, groupId): Promise<any> {
+    const { id: userId } = user;
+
+    // const group = await this.groupRepository
+    //   .createQueryBuilder('group')
+    //   .innerJoin('group.userPolls', 'userPoll', 'userPoll.userId = :userId', {
+    //     userId,
+    //   })
+    //   .andWhere('userPoll.groupId = :groupId', { groupId })
+    //   .innerJoinAndSelect('userPoll.userId', 'user', 'userPoll.')
+    //   .getOne();
+
+    const group = await this.groupRepository
+      .createQueryBuilder('group')
+      .innerJoin('group.userPolls', 'userPolls')
+      .select(['group.groupName', 'group.voteEndDt', 'userPolls.id'])
+      .innerJoinAndSelect('userPolls.user', 'user')
+      .getMany();
+
+    // const group = await this.groupRepository.findOne(groupId, {
+    //   relations: ['userPolls'],
+    // });
+
+    return group;
   }
 
   // async updateGroup(
