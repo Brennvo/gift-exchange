@@ -22,6 +22,10 @@ export class UserService {
     return newUser;
   }
 
+  async findById(userId) {
+    return await this.userRepository.findOne(userId);
+  }
+
   async findByGoogleId(googleId) {
     return this.userRepository.findOne({ googleId });
   }
