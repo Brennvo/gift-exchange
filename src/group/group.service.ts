@@ -105,8 +105,6 @@ export class GroupService {
       throw new BadRequestException('User already in group.');
     }
 
-    console.log('group polls are : ', groupPolls);
-
     // Create a new user poll
     const newUserPoll = this.userGroupPollRepository.create({
       group,
