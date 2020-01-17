@@ -11,6 +11,8 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Group)
+    private readonly groupRepository: Repository<Group>,
   ) {}
 
   async createUser(createUserDto: CreateUserDTO): Promise<User> {
@@ -18,6 +20,10 @@ export class UserService {
     await this.userRepository.save(newUser);
 
     return newUser;
+  }
+
+  async findById(userId) {
+    return await this.userRepository.findOne(userId);
   }
 
   async findByGoogleId(googleId) {
@@ -56,7 +62,8 @@ export class UserService {
     //   .innerJoinAndSelect('userPoll.group', 'group')
     //   .getOne();
 
-    const groups = await Group.createQueryBuilder('group')
+    const groups = await this.groupRepository
+      .createQueryBuilder('group')
       .innerJoin('group.userPolls', 'userPoll', 'userPoll.userId = :userId', {
         userId,
       })

@@ -1,6 +1,5 @@
 import {
   Entity,
-  BaseEntity,
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
@@ -10,7 +9,7 @@ import { User } from './user.entity';
 import { Group } from './group.entity';
 
 @Entity()
-export class UserGroupPoll extends BaseEntity {
+export class UserGroupPoll {
   @PrimaryGeneratedColumn()
   id: number;
 
