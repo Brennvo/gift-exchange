@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateGroupDTO } from './dto/create-group.dto';
 import { Group } from 'src/entities/group.entity';
 import { Repository } from 'typeorm';
@@ -23,27 +19,7 @@ export class GroupService {
     private readonly userGroupPollRepository: Repository<UserGroupPoll>,
   ) {}
 
-  async createGroup(user, createGroupDto: CreateGroupDTO): Promise<Group> {
-    const { groupName, voteEndDt } = createGroupDto;
-    const owner = await this.userRepository.findOne(user.id);
-    const group = new Group();
-    group.groupName = groupName;
-    group.voteEndDt = new Date(voteEndDt);
-    // TODO: Update owner to user attached to req.body from Passport
-    group.owner = owner;
-    const newGroup = await this.groupRepository.save(group);
-
-    // Create a poll for this user (owner) in the group
-    const userPoll = new UserGroupPoll();
-    userPoll.user = owner;
-    userPoll.groupId = newGroup.id;
-    await this.userGroupPollRepository.save(userPoll);
-
-    return newGroup;
-  }
-
   async getUserGroups(user): Promise<Group[]> {
-    console.log('user in group service: ', user);
     const { id: userId } = user;
 
     const groups = await this.groupRepository
@@ -59,26 +35,63 @@ export class GroupService {
   async getGroupById(user, groupId): Promise<any> {
     const { id: userId } = user;
 
-    // const group = await this.groupRepository
-    //   .createQueryBuilder('group')
-    //   .innerJoin('group.userPolls', 'userPoll', 'userPoll.userId = :userId', {
-    //     userId,
-    //   })
-    //   .andWhere('userPoll.groupId = :groupId', { groupId })
-    //   .innerJoinAndSelect('userPoll.userId', 'user', 'userPoll.')
-    //   .getOne();
-
     const group = await this.groupRepository
       .createQueryBuilder('group')
-      .innerJoin('group.userPolls', 'userPolls')
+      .innerJoin(
+        'group.userPolls',
+        'userPolls',
+        'userPolls.groupId = :groupId',
+        {
+          groupId,
+        },
+      )
       .select(['group.groupName', 'group.voteEndDt', 'userPolls.id'])
       .innerJoinAndSelect('userPolls.user', 'user')
-      .getMany();
+      .getOne();
 
-    // const group = await this.groupRepository.findOne(groupId, {
-    //   relations: ['userPolls'],
-    // });
+    // Determine if user is in the group
+    if (group.userPolls.every(userPoll => userPoll.user.id != userId)) {
+      throw new NotFoundException();
+    }
 
+    return group;
+  }
+
+  async createGroup(user, createGroupDto: CreateGroupDTO): Promise<Group> {
+    const { groupName, voteEndDt } = createGroupDto;
+    const owner = await this.userRepository.findOne(user.id);
+
+    // Create new group with owner
+    const newGroup = await this.groupRepository.create({
+      groupName,
+      voteEndDt: new Date(voteEndDt),
+      owner,
+    });
+    const group = await this.groupRepository.save(newGroup);
+
+    // Create a poll for this user (owner) in the group
+    const userPoll = this.userGroupPollRepository.create({
+      user,
+      group,
+    });
+    await this.userGroupPollRepository.save(userPoll);
+
+    return newGroup;
+  }
+
+  async joinGroup(user, groupId): Promise<Group> {
+    const group = await this.groupRepository.findOne(groupId);
+
+    if (!group) {
+      throw new NotFoundException(`Group not found`);
+    }
+
+    // Create a new user poll
+    const newUserPoll = this.userGroupPollRepository.create({
+      group,
+      user,
+    });
+    await this.userGroupPollRepository.save(newUserPoll);
     return group;
   }
 
