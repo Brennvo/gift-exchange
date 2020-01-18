@@ -20,7 +20,7 @@ export class PollGuard implements CanActivate {
     );
 
     if (!poll) {
-      throw new NotFoundException();
+      throw new NotFoundException('Poll not found.');
     }
 
     if (user.id == params.targetUserId) {
