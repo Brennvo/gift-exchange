@@ -60,7 +60,7 @@ export class GroupService {
       .getOne();
 
     // Determine if user is in the group
-    if (group.userPolls.every(userPoll => userPoll.user.id != userId)) {
+    if (!group.userPolls.some(userPoll => userPoll.user.id != userId)) {
       throw new NotFoundException();
     }
 

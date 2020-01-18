@@ -22,6 +22,9 @@ export class Suggestion {
   link: string;
 
   @Column()
+  votes: number;
+
+  @Column()
   pollId: number;
   @ManyToOne(
     type => UserGroupPoll,

@@ -65,17 +65,36 @@ export class GroupController {
     return this.groupService.joinGroup(req.user, id);
   }
 
-  @Post('/:groupId/poll/:userId')
-  createSuggestion(
+  @Get('/:groupId/poll/:userId')
+  getUserPoll(
     @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
     @Param('userId', ParseIntPipe) userId,
+  ): Promise<any> {
+    return this.pollService.getUserPoll(req.user, groupId, userId);
+  }
+
+  @Post('/:groupId/poll/:targetUserId')
+  createSuggestion(
+    @Request() req,
+    @Param('groupId', ParseIntPipe) groupId,
+    @Param('targetUserId', ParseIntPipe) targetUserId,
     @Body() createSuggestionDto: CreateSuggestionDTO,
   ): Promise<Suggestion> {
     return this.pollService.createSuggestion(
       req.user,
       groupId,
+      targetUserId,
       createSuggestionDto,
     );
+  }
+
+  @Patch('/:groupId/poll/:targetUserId')
+  upvoteSuggestion(
+    @Request() req,
+    @Param('groupId', ParseIntPipe) groupId,
+    @Param('targetUserId', ParseIntPipe) targetUserId,
+  ): Promise<Suggestion> {
+    return this.pollService.upvoteSuggestion(req.user, groupId, targetUserId);
   }
 }
