@@ -37,9 +37,7 @@ export class GroupService {
     return groups;
   }
 
-  async getGroupById(user, groupId): Promise<any> {
-    const { id: userId } = user;
-
+  async getGroupById(groupId): Promise<any> {
     const group = await this.groupRepository
       .createQueryBuilder('group')
       .innerJoin(
@@ -58,11 +56,6 @@ export class GroupService {
       ])
       .innerJoinAndSelect('userPolls.user', 'user')
       .getOne();
-
-    // Determine if user is in the group
-    if (!group.userPolls.some(userPoll => userPoll.user.id != userId)) {
-      throw new NotFoundException();
-    }
 
     return group;
   }
@@ -92,10 +85,6 @@ export class GroupService {
   async joinGroup(user, groupId): Promise<Group> {
     const group = await this.groupRepository.findOne(groupId);
 
-    if (!group) {
-      throw new NotFoundException(`Group not found`);
-    }
-
     // Check if user is already in group
     const groupPolls = await this.userGroupPollRepository.find({
       where: { groupId },
@@ -123,10 +112,6 @@ export class GroupService {
     } = updateGroupDto;
 
     const group = await this.groupRepository.findOne(groupId);
-
-    if (!group) {
-      throw new NotFoundException();
-    }
 
     // Authorize if user is owner and can edit group
     if (group.ownerId !== user.id) {
@@ -173,41 +158,4 @@ export class GroupService {
 
     return await this.groupRepository.save(group);
   }
-
-  // async updateGroup(
-  //   groupId: number,
-  //   updateGroupDto: UpdateGroupDTO,
-  // ): Promise<Group> {
-  //   const { groupName, voteEndDt, participants, ownerId } = updateGroupDto;
-
-  //   const foundGroup = await Group.findOne(groupId);
-
-  //   console.log('found group owner: ', foundGroup.ownerId);
-  //   console.log('USER ID IN REQ: ', ownerId);
-  //   if (foundGroup.ownerId != ownerId) {
-  //     throw new UnauthorizedException();
-  //   }
-
-  //   if (!foundGroup) {
-  //     throw new NotFoundException(`Group with ID ${groupId} not found.`);
-  //   }
-
-  //   if (groupName) {
-  //     foundGroup.groupName = groupName;
-  //   }
-
-  //   if (voteEndDt) {
-  //     foundGroup.voteEndDt = voteEndDt;
-  //   }
-
-  //   if (participants) {
-  //     const updatedParticipants = await User.findByIds([
-  //       foundGroup.ownerId,
-  //       ...participants,
-  //     ]);
-  //     foundGroup.participants = updatedParticipants;
-  //   }
-
-  //   return await foundGroup.save();
-  // }
 }

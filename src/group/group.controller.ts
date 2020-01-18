@@ -20,8 +20,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { CreateSuggestionDTO } from './dto/create-suggestion.dto';
 import { PollService } from './poll.service';
 import { Suggestion } from 'src/entities/suggestion.entity';
+import { GroupGuard } from './gaurds/group.guard';
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), GroupGuard)
 @Controller('group')
 export class GroupController {
   constructor(
@@ -39,7 +40,7 @@ export class GroupController {
     @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
   ): Promise<any> {
-    return this.groupService.getGroupById(req.user, groupId);
+    return this.groupService.getGroupById(groupId);
   }
 
   @Post()
