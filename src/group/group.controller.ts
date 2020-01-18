@@ -20,8 +20,11 @@ import { AuthGuard } from '@nestjs/passport';
 import { CreateSuggestionDTO } from './dto/create-suggestion.dto';
 import { PollService } from './poll.service';
 import { Suggestion } from 'src/entities/suggestion.entity';
+import { GroupGuard } from './gaurds/group.guard';
+import { PollGuard } from './gaurds/poll.guard';
+import { VotePollDTO } from './dto/vote-poll.dto';
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), GroupGuard)
 @Controller('group')
 export class GroupController {
   constructor(
@@ -39,7 +42,7 @@ export class GroupController {
     @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
   ): Promise<any> {
-    return this.groupService.getGroupById(req.user, groupId);
+    return this.groupService.getGroupById(groupId);
   }
 
   @Post()
@@ -65,24 +68,23 @@ export class GroupController {
     return this.groupService.joinGroup(req.user, id);
   }
 
-  @Get('/:groupId/poll/:userId')
+  @Get('/:groupId/poll/:targetUserId')
+  @UseGuards(PollGuard)
   getUserPoll(
-    @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
-    @Param('userId', ParseIntPipe) userId,
+    @Param('targetUserId', ParseIntPipe) targetUserId,
   ): Promise<any> {
-    return this.pollService.getUserPoll(req.user, groupId, userId);
+    return this.pollService.getUserPoll(groupId, targetUserId);
   }
 
   @Post('/:groupId/poll/:targetUserId')
+  @UseGuards(PollGuard)
   createSuggestion(
-    @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
     @Param('targetUserId', ParseIntPipe) targetUserId,
     @Body() createSuggestionDto: CreateSuggestionDTO,
   ): Promise<Suggestion> {
     return this.pollService.createSuggestion(
-      req.user,
       groupId,
       targetUserId,
       createSuggestionDto,
@@ -90,11 +92,16 @@ export class GroupController {
   }
 
   @Patch('/:groupId/poll/:targetUserId')
+  @UseGuards(PollGuard)
   upvoteSuggestion(
-    @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
     @Param('targetUserId', ParseIntPipe) targetUserId,
+    @Body() votePollDto: VotePollDTO,
   ): Promise<Suggestion> {
-    return this.pollService.upvoteSuggestion(req.user, groupId, targetUserId);
+    return this.pollService.voteOnSuggestion(
+      groupId,
+      targetUserId,
+      votePollDto,
+    );
   }
 }
