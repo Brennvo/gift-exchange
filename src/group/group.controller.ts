@@ -93,7 +93,15 @@ export class GroupController {
 
   @Patch('/:groupId/poll/:targetUserId')
   @UseGuards(PollGuard)
-  upvoteSuggestion(@Body() votePollDto: VotePollDTO): Promise<Suggestion> {
-    return this.pollService.voteOnSuggestion(votePollDto);
+  upvoteSuggestion(
+    @Param('groupId', ParseIntPipe) groupId,
+    @Param('targetUserId', ParseIntPipe) targetUserId,
+    @Body() votePollDto: VotePollDTO,
+  ): Promise<Suggestion> {
+    return this.pollService.voteOnSuggestion(
+      groupId,
+      targetUserId,
+      votePollDto,
+    );
   }
 }

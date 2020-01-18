@@ -25,7 +25,7 @@ export class GroupGuard implements CanActivate {
       !group ||
       !group.userPolls.some(userPoll => userPoll.user.id == user.id)
     ) {
-      throw new NotFoundException();
+      throw new NotFoundException('Group not found.');
     }
 
     return true;

@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
@@ -25,6 +25,7 @@ export class PollService {
       .innerJoin('poll.group', 'group')
       .innerJoin('poll.user', 'user')
       .select([
+        'poll.id',
         'poll.groupId',
         'group.groupName',
         'user.username',
@@ -55,8 +56,24 @@ export class PollService {
     return await this.suggestionRepository.save(newSuggestion);
   }
 
-  async voteOnSuggestion(votePollDto: VotePollDTO): Promise<Suggestion> {
-    const suggestion = await this.suggestionRepository.findOne(votePollDto.id);
+  async voteOnSuggestion(
+    groupId: number,
+    targetUserId: number,
+    votePollDto: VotePollDTO,
+  ): Promise<Suggestion> {
+    const poll = await this.getUserPoll(groupId, targetUserId);
+
+    const suggestion = await this.suggestionRepository
+      .createQueryBuilder('suggestion')
+      .where('suggestion.pollId = :pollId', { pollId: poll.id })
+      .andWhere('suggestion.id = :suggestionId', {
+        suggestionId: votePollDto.id,
+      })
+      .getOne();
+
+    if (!suggestion) {
+      throw new NotFoundException(`Suggestion not found for poll ${poll.id}`);
+    }
 
     suggestion.votes = votePollDto.upvote
       ? suggestion.votes + 1
