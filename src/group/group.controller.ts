@@ -21,6 +21,7 @@ import { CreateSuggestionDTO } from './dto/create-suggestion.dto';
 import { PollService } from './poll.service';
 import { Suggestion } from 'src/entities/suggestion.entity';
 import { GroupGuard } from './gaurds/group.guard';
+import { PollGuard } from './gaurds/poll.guard';
 
 @UseGuards(AuthGuard('jwt'), GroupGuard)
 @Controller('group')
@@ -66,24 +67,23 @@ export class GroupController {
     return this.groupService.joinGroup(req.user, id);
   }
 
-  @Get('/:groupId/poll/:userId')
+  @Get('/:groupId/poll/:targetUserId')
+  @UseGuards(PollGuard)
   getUserPoll(
-    @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
-    @Param('userId', ParseIntPipe) userId,
+    @Param('targetUserId', ParseIntPipe) targetUserId,
   ): Promise<any> {
-    return this.pollService.getUserPoll(req.user, groupId, userId);
+    return this.pollService.getUserPoll(groupId, targetUserId);
   }
 
   @Post('/:groupId/poll/:targetUserId')
+  @UseGuards(PollGuard)
   createSuggestion(
-    @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
     @Param('targetUserId', ParseIntPipe) targetUserId,
     @Body() createSuggestionDto: CreateSuggestionDTO,
   ): Promise<Suggestion> {
     return this.pollService.createSuggestion(
-      req.user,
       groupId,
       targetUserId,
       createSuggestionDto,
@@ -91,11 +91,11 @@ export class GroupController {
   }
 
   @Patch('/:groupId/poll/:targetUserId')
+  @UseGuards(PollGuard)
   upvoteSuggestion(
-    @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
     @Param('targetUserId', ParseIntPipe) targetUserId,
   ): Promise<Suggestion> {
-    return this.pollService.upvoteSuggestion(req.user, groupId, targetUserId);
+    return this.pollService.upvoteSuggestion(groupId, targetUserId);
   }
 }
