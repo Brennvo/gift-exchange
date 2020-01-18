@@ -22,6 +22,7 @@ import { PollService } from './poll.service';
 import { Suggestion } from 'src/entities/suggestion.entity';
 import { GroupGuard } from './gaurds/group.guard';
 import { PollGuard } from './gaurds/poll.guard';
+import { VotePollDTO } from './dto/vote-poll.dto';
 
 @UseGuards(AuthGuard('jwt'), GroupGuard)
 @Controller('group')
@@ -92,10 +93,7 @@ export class GroupController {
 
   @Patch('/:groupId/poll/:targetUserId')
   @UseGuards(PollGuard)
-  upvoteSuggestion(
-    @Param('groupId', ParseIntPipe) groupId,
-    @Param('targetUserId', ParseIntPipe) targetUserId,
-  ): Promise<Suggestion> {
-    return this.pollService.upvoteSuggestion(groupId, targetUserId);
+  upvoteSuggestion(@Body() votePollDto: VotePollDTO): Promise<Suggestion> {
+    return this.pollService.voteOnSuggestion(votePollDto);
   }
 }

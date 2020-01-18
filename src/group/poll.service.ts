@@ -5,6 +5,7 @@ import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
 import { User } from 'src/entities/user.entity';
 import { CreateSuggestionDTO } from './dto/create-suggestion.dto';
 import { Suggestion } from 'src/entities/suggestion.entity';
+import { VotePollDTO } from './dto/vote-poll.dto';
 
 @Injectable()
 export class PollService {
@@ -54,22 +55,12 @@ export class PollService {
     return await this.suggestionRepository.save(newSuggestion);
   }
 
-  async upvoteSuggestion(
-    groupId: number,
-    targetUserId: number,
-  ): Promise<Suggestion> {
-    const poll = await this.pollRepository
-      .createQueryBuilder('poll')
-      .where('poll.userId = :userId', { userId: targetUserId })
-      .andWhere('poll.groupId = :groupId', { groupId })
-      .getOne();
+  async voteOnSuggestion(votePollDto: VotePollDTO): Promise<Suggestion> {
+    const suggestion = await this.suggestionRepository.findOne(votePollDto.id);
 
-    const suggestion = await this.suggestionRepository
-      .createQueryBuilder('suggestion')
-      .where('suggestion.pollId = :pollId', { pollId: poll.id })
-      .getOne();
-
-    suggestion.votes = suggestion.votes + 1;
+    suggestion.votes = votePollDto.upvote
+      ? suggestion.votes + 1
+      : suggestion.votes - 1;
 
     await this.suggestionRepository.save(suggestion);
 
