@@ -15,7 +15,7 @@ export class PollService {
     private readonly suggestionRepository: Repository<Suggestion>,
   ) {}
 
-  async getUserPoll(requestingUser, groupId, userId) {
+  async getUserPoll(groupId, userId) {
     const poll = await this.pollRepository
       .createQueryBuilder('poll')
       .where('poll.groupId = :groupId', { groupId })
@@ -35,7 +35,6 @@ export class PollService {
   }
 
   async createSuggestion(
-    user: User,
     groupId: number,
     targetUserId: number,
     createSuggestionDto: CreateSuggestionDTO,
@@ -56,7 +55,6 @@ export class PollService {
   }
 
   async upvoteSuggestion(
-    user: User,
     groupId: number,
     targetUserId: number,
   ): Promise<Suggestion> {
