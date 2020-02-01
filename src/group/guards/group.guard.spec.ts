@@ -3,9 +3,9 @@ import { GroupService } from '../group.service';
 import { GroupGuard } from './group.guard';
 import { NotFoundException } from '@nestjs/common';
 
-const mockGroupService = {
+const mockGroupService = () => ({
   getGroupById: jest.fn(),
-};
+});
 
 describe('Group guard tests', () => {
   let groupGuard;
@@ -17,7 +17,7 @@ describe('Group guard tests', () => {
         GroupGuard,
         {
           provide: GroupService,
-          useValue: mockGroupService,
+          useFactory: mockGroupService,
         },
       ],
     }).compile();
