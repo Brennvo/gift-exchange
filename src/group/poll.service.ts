@@ -1,11 +1,10 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
-import { User } from 'src/entities/user.entity';
 import { CreateSuggestionDTO } from './dto/create-suggestion.dto';
-import { Suggestion } from 'src/entities/suggestion.entity';
 import { VotePollDTO } from './dto/vote-poll.dto';
+import { UserGroupPoll } from '../entities/user-group-poll.entity';
+import { Suggestion } from '../entities/suggestion.entity';
 
 @Injectable()
 export class PollService {

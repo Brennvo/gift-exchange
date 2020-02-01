@@ -14,15 +14,14 @@ import {
 import { CreateGroupDTO } from './dto/create-group.dto';
 import { GroupService } from './group.service';
 import { UpdateGroupDTO } from './dto/update-group.dto';
-import { Group } from 'src/entities/group.entity';
-import { User } from 'src/entities/user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateSuggestionDTO } from './dto/create-suggestion.dto';
 import { PollService } from './poll.service';
-import { Suggestion } from 'src/entities/suggestion.entity';
 import { GroupGuard } from './gaurds/group.guard';
 import { PollGuard } from './gaurds/poll.guard';
 import { VotePollDTO } from './dto/vote-poll.dto';
+import { Group } from '../entities/group.entity';
+import { Suggestion } from '../entities/suggestion.entity';
 
 @UseGuards(AuthGuard('jwt'), GroupGuard)
 @Controller('group')
