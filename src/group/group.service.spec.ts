@@ -4,7 +4,11 @@ import { Group } from '../entities/group.entity';
 import { UserGroupPoll } from '../entities/user-group-poll.entity';
 import { User } from '../entities/user.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 
 const mockRepository = () => ({
   create: jest.fn(),
@@ -144,6 +148,11 @@ describe('GroupService', () => {
       const newParticipants = [2, 3];
       groupRepository.save.mockResolvedValue(initialGroup);
       const valuesMock = jest.fn().mockReturnThis();
+
+      // Mock query result for existing group members
+      pollRepository.find.mockResolvedValue([]);
+
+      // Mock insert into poll table
       pollRepository.createQueryBuilder = jest.fn().mockReturnValue({
         insert: jest.fn().mockReturnThis(),
         values: valuesMock,
@@ -157,7 +166,17 @@ describe('GroupService', () => {
       ]);
     });
 
-    it('should not add existing partcipants to group', async () => {});
+    it('should not add existing partcipants to group', async () => {
+      const newParticipants = [5];
+      groupRepository.save.mockResolvedValue(initialGroup);
+
+      // Mock query result for existing group members
+      pollRepository.find.mockResolvedValue(['result']);
+
+      await expect(
+        groupService.updateGroup({ id: 1 }, 1, { newParticipants }),
+      ).rejects.toThrow(ConflictException);
+    });
 
     it('should remove participants from the group', async () => {
       const removedParticipants = [5, 6];
