@@ -3,6 +3,7 @@ import { PollService } from './poll.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { UserGroupPoll } from '../entities/user-group-poll.entity';
 import { Suggestion } from '../entities/suggestion.entity';
+import { NotFoundException } from '@nestjs/common';
 
 const mockRepository = () => ({
   create: jest.fn(),
@@ -93,6 +94,19 @@ describe('Poll service', () => {
         andWhere: jest.fn().mockReturnThis(),
         getOne: jest.fn().mockReturnValue(mockSuggestion),
       });
+    });
+
+    it('should throw excpetion if suggestion does not exist', async () => {
+      suggestionRepository.createQueryBuilder = jest.fn().mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockReturnValue(undefined),
+      });
+
+      await expect(
+        pollService.voteOnSuggestion(1, 1, { id: null }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should upvote', async () => {
