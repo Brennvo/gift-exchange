@@ -7,9 +7,6 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { User } from 'src/entities/user.entity';
-import { Group } from 'src/entities/group.entity';
-import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
 
 @Controller('user')
 export class UserController {

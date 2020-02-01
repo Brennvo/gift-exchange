@@ -1,10 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { User } from 'src/entities/user.entity';
-import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
-import { createQueryBuilder, Repository } from 'typeorm';
-import { Group } from 'src/entities/group.entity';
+import { Injectable } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDTO } from './dto/createUser.dto';
+import { User } from '../entities/user.entity';
+import { Group } from '../entities/group.entity';
 
 @Injectable()
 export class UserService {

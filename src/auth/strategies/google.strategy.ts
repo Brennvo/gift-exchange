@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
-import { keys } from 'src/config/keys';
+import { keys } from '../../config/keys';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {

@@ -3,15 +3,14 @@ import {
   NotFoundException,
   UnauthorizedException,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { CreateGroupDTO } from './dto/create-group.dto';
-import { Group } from 'src/entities/group.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/entities/user.entity';
-import { UpdateGroupDTO } from './dto/update-group.dto';
-import { UserGroupPoll } from 'src/entities/user-group-poll.entity';
-import { UserService } from 'src/user/user.service';
+import { UserGroupPoll } from '../entities/user-group-poll.entity';
+import { User } from '../entities/user.entity';
+import { Group } from '../entities/group.entity';
 
 @Injectable()
 export class GroupService {
@@ -113,7 +112,7 @@ export class GroupService {
 
     const group = await this.groupRepository.findOne(groupId);
 
-    // Authorize if user is owner and can edit group
+    // Authorize if user is owner and permitted to edit group
     if (group.ownerId !== user.id) {
       throw new UnauthorizedException();
     }
@@ -128,6 +127,21 @@ export class GroupService {
     }
 
     if (newParticipants) {
+      // https://github.com/typeorm/typeorm/blob/master/docs/find-options.md
+
+      // Avoid adding users already in group
+      const whereClauses = newParticipants.map(newParticipant => ({
+        userId: newParticipant,
+        groupId,
+      }));
+      const polls = await this.userGroupPollRepository.find({
+        where: whereClauses,
+      });
+
+      if (polls.length) {
+        throw new ConflictException('Users already in group');
+      }
+
       // Create array of user poll data
       const newData = newParticipants.map(newParticipantId => ({
         userId: newParticipantId,
