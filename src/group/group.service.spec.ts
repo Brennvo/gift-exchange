@@ -22,7 +22,7 @@ const mockUser = { id: 1, name: 'foo' };
 const mockGroup = {
   id: 1,
   groupName: 'test',
-  owner: mockUser,
+  ownerId: mockUser.id,
   voteEndDate: new Date('2020-01-01'),
 };
 
@@ -68,6 +68,25 @@ describe('GroupService', () => {
     expect(res).toBe(mockGroup);
   });
 
+  describe('getting group', () => {
+    it('should get group by id', async () => {
+      const mockInnerJoin = jest.fn().mockReturnThis();
+      groupRepository.createQueryBuilder = jest.fn().mockReturnValue({
+        innerJoin: mockInnerJoin,
+        select: jest.fn().mockReturnThis(),
+        innerJoinAndSelect: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockReturnValue(mockGroup),
+      });
+
+      const res = await groupService.getGroupById(1);
+      const calls = mockInnerJoin.mock.calls;
+      expect(
+        calls[calls.length - 1][calls[calls.length - 1].length - 1].groupId,
+      ).toBe(1);
+      expect(res).toBe(mockGroup);
+    });
+  });
+
   describe('joining a group', () => {
     it('should add user to group if not already in group', async () => {
       groupRepository.findOne.mockResolvedValue(mockGroup);
@@ -102,7 +121,10 @@ describe('GroupService', () => {
     };
 
     beforeEach(() => {
+      // Mock the group to be found in each request to update group
       groupRepository.findOne.mockResolvedValue(initialGroup);
+
+      // Mock the TypeORM query builder functions
       pollRepository.createQueryBuilder = jest.fn().mockReturnValue({
         select: jest.fn().mockReturnThis(),
         from: jest.fn().mockReturnThis(),
@@ -198,6 +220,11 @@ describe('GroupService', () => {
       ).toBe(true);
     });
 
-    it('should not remove owner from group', async () => {});
+    it('should not remove owner from group', async () => {
+      const removedParticipants = [1];
+      await expect(
+        groupService.updateGroup({ id: 1 }, 1, { removedParticipants }),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 });
