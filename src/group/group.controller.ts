@@ -82,11 +82,13 @@ export class GroupController {
     @Param('groupId', ParseIntPipe) groupId,
     @Param('targetUserId', ParseIntPipe) targetUserId,
     @Body() createSuggestionDto: CreateSuggestionDTO,
+    @Request() req,
   ): Promise<Suggestion> {
     return this.pollService.createSuggestion(
       groupId,
       targetUserId,
       createSuggestionDto,
+      req.user,
     );
   }
 

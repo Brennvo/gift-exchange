@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { UserGroupPoll } from './user-group-poll.entity';
+import { Event } from './event.entity';
 
 @Entity()
 export class Group {
@@ -34,4 +35,10 @@ export class Group {
     userGroupPoll => userGroupPoll.group,
   )
   userPolls: UserGroupPoll[];
+
+  @OneToMany(
+    type => Event,
+    event => event.group,
+  )
+  events: Event[];
 }

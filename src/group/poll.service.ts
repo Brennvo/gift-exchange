@@ -5,6 +5,10 @@ import { CreateSuggestionDTO } from './dto/create-suggestion.dto';
 import { VotePollDTO } from './dto/vote-poll.dto';
 import { UserGroupPoll } from '../entities/user-group-poll.entity';
 import { Suggestion } from '../entities/suggestion.entity';
+import { Event } from '../entities/event.entity';
+import { EventObject } from '../enums/event-object.enum';
+import { EventVerb } from '../enums/event-verb.enum';
+import { User } from '../entities/user.entity';
 
 @Injectable()
 export class PollService {
@@ -13,6 +17,8 @@ export class PollService {
     private readonly pollRepository: Repository<UserGroupPoll>,
     @InjectRepository(Suggestion)
     private readonly suggestionRepository: Repository<Suggestion>,
+    @InjectRepository(Event)
+    private readonly eventRepository: Repository<Event>,
   ) {}
 
   async getUserPoll(groupId, userId) {
@@ -39,6 +45,7 @@ export class PollService {
     groupId: number,
     targetUserId: number,
     createSuggestionDto: CreateSuggestionDTO,
+    user: User,
   ): Promise<Suggestion> {
     const poll = await this.pollRepository
       .createQueryBuilder('poll')
@@ -46,11 +53,42 @@ export class PollService {
       .andWhere('poll.groupId = :groupId', { groupId })
       .getOne();
 
+    // This will ensure we get the user as part of the find query meaning ..
+    // .. we can add it to our event
+    const testPoll = await this.pollRepository.findOne({
+      where: {
+        userId: targetUserId,
+        groupId,
+      },
+      relations: ['user'],
+    });
+
     const newSuggestion = await this.suggestionRepository.create({
       ...createSuggestionDto,
-      poll,
+      poll: testPoll,
       votes: 0,
     });
+
+    const newEvent = await this.eventRepository.create({
+      title: `A suggestion has been created for ${testPoll.user.username}!`,
+      verb: EventVerb.CREATE,
+      groupId,
+      actor: {
+        objectType: EventObject.USER,
+        data: user,
+      },
+      domainObject: {
+        objectType: EventObject.SUGGESTION,
+        data: newSuggestion,
+      },
+      target: {
+        objectType: EventObject.POLL,
+        data: testPoll,
+      },
+    });
+
+    const eventRes = await this.eventRepository.save(newEvent);
+    console.log('event res: ', eventRes);
 
     return await this.suggestionRepository.save(newSuggestion);
   }
