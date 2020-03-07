@@ -10,7 +10,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private readonly authService: AuthService) {
     // call the base class constructor (PassportStrategy)
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: req => {
+        return req.cookies.npid;
+      },
       ignoreExpieration: false,
       secretOrKey: keys.jwt.secret,
     });

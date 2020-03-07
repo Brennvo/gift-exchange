@@ -1,15 +1,20 @@
-import { Controller, Get, UseGuards, Body, Req } from '@nestjs/common';
+import { Controller, Get, UseGuards, Body, Req, Res } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
 import { User } from '../entities/user.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
+  private readonly CLIENT_URL;
   constructor(
     private readonly userService: UserService,
     private readonly authService: AuthService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    this.CLIENT_URL = this.configService.get<string>('CLIENT_URL');
+  }
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
@@ -17,24 +22,29 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async callback(@Req() req) {
-    const user: User = await this.userService.findByGoogleId(req.user.googleId);
+  async callback(@Req() req, @Res() res) {
+    const exisingUser: User = await this.userService.findByGoogleId(
+      req.user.googleId,
+    );
 
-    let userId;
-    if (!user) {
-      const newUser = await this.userService.createUser({
+    let newUser;
+    if (!exisingUser) {
+      newUser = await this.userService.createUser({
         username: req.user.username,
         facebookId: null,
         googleId: req.user.googleId,
       });
-      userId = newUser.id;
-    } else {
-      userId = user.id;
     }
 
-    const payload = { userId };
+    const payload = exisingUser
+      ? { userId: exisingUser.id, username: exisingUser.username }
+      : { userId: newUser.id, username: newUser.username };
 
-    return await this.authService.signJwt(payload);
+    const jwt = await this.authService.signJwt(payload);
+    res.cookie('npid', jwt, {
+      httpOnly: true,
+    });
+    res.redirect(this.CLIENT_URL);
   }
 
   @Get('facebook')
@@ -43,23 +53,34 @@ export class AuthController {
 
   @Get('facebook/callback')
   @UseGuards(AuthGuard('facebook'))
-  async facebookCallback(@Req() req) {
-    const user = await this.userService.findByFacebookId(req.user.facebookId);
+  async facebookCallback(@Req() req, @Res() res) {
+    const existingUser: User = await this.userService.findByFacebookId(
+      req.user.facebookId,
+    );
 
-    let userId;
-    if (!user) {
-      const newUser = await this.userService.createUser({
+    let newUser;
+    if (!existingUser) {
+      newUser = await this.userService.createUser({
         username: req.user.username,
         googleId: null,
         facebookId: req.user.facebookId,
       });
-      userId = newUser.id;
-    } else {
-      userId = user.id;
     }
 
-    const payload = { userId };
+    const payload = existingUser
+      ? { userId: existingUser.id, username: existingUser.username }
+      : { userId: newUser.id, username: newUser.username };
 
-    return await this.authService.signJwt(payload);
+    const jwt = await this.authService.signJwt(payload);
+    res.cookie('npid', jwt, {
+      httpOnly: true,
+    });
+    res.redirect(this.CLIENT_URL);
+  }
+
+  @Get('/logout')
+  logout(@Req() req, @Res() res) {
+    res.clearCookie('npid');
+    res.send('ok');
   }
 }
