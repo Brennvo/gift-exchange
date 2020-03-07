@@ -1,29 +1,16 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Req } from '@nestjs/common';
 import { UserService } from './user.service';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  // @Post()
-  // craeteUser(): Promise<User> {
-  //   return this.userService.createUser();
-  // }
-
-  // @Get('/groups/:groupId')
-  // getGroupById(
-  //   @Param('groupId', ParseIntPipe) groupId: number,
-  //   @Body('userId') userId: number,
-  // ): Promise<Group> {
-  //   return this.userService.getGroupById(userId, groupId);
-  // }
+  @Get('')
+  getUser(@Req() req) {
+    return req.user;
+  }
 
   @Get(':userId/groups')
   // Eventually, Passport will append the user to the request

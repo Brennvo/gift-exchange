@@ -48,6 +48,7 @@ export class GroupService {
         },
       )
       .select([
+        'group.id',
         'group.groupName',
         'group.ownerId',
         'group.voteEndDt',
