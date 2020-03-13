@@ -10,7 +10,7 @@ export class UpdateGroupDTO {
   voteEndDt: Date;
 
   @IsOptional()
-  newParticipants: number[];
+  newEmails: string[];
 
   @IsOptional()
   removedParticipants: number[];
