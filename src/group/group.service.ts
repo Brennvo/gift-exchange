@@ -46,6 +46,9 @@ export class GroupService {
   async getGroupById(groupId): Promise<any> {
     const group = await this.groupRepository
       .createQueryBuilder('group')
+      .leftJoin('group.accessTokens', 'invites', 'invites.groupId = :groupId', {
+        groupId,
+      })
       .innerJoin(
         'group.userPolls',
         'userPolls',
@@ -60,6 +63,7 @@ export class GroupService {
         'group.ownerId',
         'group.voteEndDt',
         'userPolls.id',
+        'invites.email',
       ])
       .innerJoinAndSelect('userPolls.user', 'user')
       .getOne();
@@ -112,6 +116,12 @@ export class GroupService {
       user,
     });
     await this.userGroupPollRepository.save(newUserPoll);
+
+    // Revoke access token
+    const { email } = await this.groupAccess.findOne({
+      where: { accessToken },
+    });
+    await this.revokeGroupAccess(groupId, email);
     return group;
   }
 

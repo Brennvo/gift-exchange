@@ -71,6 +71,15 @@ export class GroupController {
     return this.groupService.inviteMember(req.user, id, email);
   }
 
+  @Patch('/:id/revokeInvitation')
+  revokeInvitation(
+    @Request() req,
+    @Param('id', ParseIntPipe) id,
+    @Body('email') email,
+  ): Promise<any> {
+    return this.groupService.revokeGroupAccess(id, email);
+  }
+
   @Patch('/:id/join/:accessToken')
   joinGroup(
     @Request() req,
