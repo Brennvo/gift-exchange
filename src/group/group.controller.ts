@@ -62,9 +62,22 @@ export class GroupController {
     return this.groupService.updateGroup(req.user, id, updateGroupDto);
   }
 
-  @Patch('/:id/join')
-  joinGroup(@Request() req, @Param('id', ParseIntPipe) id): Promise<Group> {
-    return this.groupService.joinGroup(req.user, id);
+  @Patch('/:id/invite')
+  invitePartipcant(
+    @Request() req,
+    @Param('id', ParseIntPipe) id,
+    @Body('email') email,
+  ): Promise<any> {
+    return this.groupService.inviteMember(req.user, id, email);
+  }
+
+  @Patch('/:id/join/:accessToken')
+  joinGroup(
+    @Request() req,
+    @Param('id', ParseIntPipe) id,
+    @Param('accessToken') accessToken,
+  ): Promise<Group> {
+    return this.groupService.joinGroup(req.user, id, accessToken);
   }
 
   @Get('/:groupId/poll/:targetUserId')

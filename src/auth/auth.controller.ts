@@ -1,4 +1,12 @@
-import { Controller, Get, UseGuards, Body, Req, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Body,
+  Req,
+  Res,
+  Param,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
@@ -44,7 +52,8 @@ export class AuthController {
     res.cookie('npid', jwt, {
       httpOnly: true,
     });
-    res.redirect(this.CLIENT_URL);
+
+    res.redirect(`${this.CLIENT_URL}${this.authService.getReturnurl()}`);
   }
 
   @Get('facebook')

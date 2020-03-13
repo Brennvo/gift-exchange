@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { FacebookStrategy } from './strategies/facebook.strategy';
@@ -8,6 +8,7 @@ import { AuthService } from './auth.service';
 import { PassportModule } from '@nestjs/passport';
 import { UserModule } from '../user/user.module';
 import { keys } from '../config/keys';
+import { HistoryMiddleWare } from './middleware/history.middleware';
 
 @Module({
   imports: [
@@ -23,4 +24,11 @@ import { keys } from '../config/keys';
   controllers: [AuthController],
   providers: [GoogleStrategy, FacebookStrategy, JwtStrategy, AuthService],
 })
-export class AuthModule {}
+export class AuthModule {
+  configure(consuemr: MiddlewareConsumer) {
+    consuemr.apply(HistoryMiddleWare).forRoutes({
+      path: '/auth/google',
+      method: RequestMethod.GET,
+    });
+  }
+}
