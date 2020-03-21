@@ -26,9 +26,12 @@ import { HistoryMiddleWare } from './middleware/history.middleware';
 })
 export class AuthModule {
   configure(consuemr: MiddlewareConsumer) {
-    consuemr.apply(HistoryMiddleWare).forRoutes({
-      path: '/auth/google',
-      method: RequestMethod.GET,
-    });
+    consuemr.apply(HistoryMiddleWare).forRoutes(
+      {
+        path: '/auth/google',
+        method: RequestMethod.GET,
+      },
+      { path: '/auth/facebook', method: RequestMethod.GET },
+    );
   }
 }

@@ -94,16 +94,25 @@ export class GroupService {
   }
 
   async joinGroup(user, groupId, accessToken): Promise<Group> {
-    const group = await this.groupRepository.findOne(groupId);
+    // Revoke access token
+    const groupAccess = await this.groupAccess.findOne({
+      where: { accessToken },
+    });
 
-    // Check if user is already in group
     const groupPolls = await this.userGroupPollRepository.find({
       where: { groupId },
     });
 
     if (groupPolls.some(poll => poll.userId === user.id)) {
-      throw new BadRequestException('User already in group.');
+      throw new ConflictException('User already in group.');
     }
+
+    if (!groupAccess) {
+      throw new NotFoundException('Sorry, that group was not found.');
+    }
+    await this.revokeGroupAccess(groupId, groupAccess.email);
+
+    const group = await this.groupRepository.findOne(groupId);
 
     // TODO: Check if access token is valid
 
@@ -117,11 +126,6 @@ export class GroupService {
     });
     await this.userGroupPollRepository.save(newUserPoll);
 
-    // Revoke access token
-    const { email } = await this.groupAccess.findOne({
-      where: { accessToken },
-    });
-    await this.revokeGroupAccess(groupId, email);
     return group;
   }
 
@@ -166,9 +170,10 @@ export class GroupService {
       await this.emailService.sendEmail({
         to: email,
         subject: `Your Vote Matters with The North Poll!`,
-        html: `Come join the fun with the ${group.groupName}! Visit <a href="http://localhost:3000/group/${groupId}/join/${accessToken}>The North Poll to confirm your participation</a>.`,
+        html: `You're invited to partake in The North Poll! Come <a href="http://localhost:3000/group/${groupId}/join/${accessToken}">join ${group.groupName}</a> there now.`,
       });
     } catch (e) {
+      await this.revokeGroupAccess(groupId, email);
       throw new ServiceUnavailableException();
     }
   }

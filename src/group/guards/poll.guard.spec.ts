@@ -29,12 +29,14 @@ describe('Poll guard tests', () => {
       context = {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: jest.fn().mockReturnValue({
-            params: { targetUserId: 2 },
+            params: { groupId: 2 },
             user: { id: 1 },
           }),
         }),
       };
-      pollService.getUserPoll.mockResolvedValue({});
+      pollService.getUserPoll.mockResolvedValue({
+        user: { id: 5 },
+      });
       const res = await pollGaurd.canActivate(context);
       expect(res).toBe(true);
     });
@@ -60,12 +62,16 @@ describe('Poll guard tests', () => {
       context = {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: jest.fn().mockReturnValue({
-            params: { targetUserId: 1 },
+            params: { groupId: 10 },
             user: { id: 1 },
           }),
         }),
       };
-      pollService.getUserPoll.mockResolvedValue({});
+      pollService.getUserPoll.mockResolvedValue({
+        user: {
+          id: 1,
+        },
+      });
       await expect(pollGaurd.canActivate(context)).rejects.toThrow(
         BadRequestException,
       );

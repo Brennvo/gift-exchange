@@ -15,11 +15,10 @@ export class PollService {
     private readonly suggestionRepository: Repository<Suggestion>,
   ) {}
 
-  async getUserPoll(groupId, userId) {
+  async getUserPoll(groupId, pollId) {
     const poll = await this.pollRepository
       .createQueryBuilder('poll')
-      .where('poll.groupId = :groupId', { groupId })
-      .andWhere('poll.userId = :userId', { userId })
+      .where('poll.id = :pollId', { pollId })
       .leftJoin('poll.suggestions', 'suggestions')
       .innerJoin('poll.group', 'group')
       .innerJoin('poll.user', 'user')
@@ -28,6 +27,7 @@ export class PollService {
         'poll.groupId',
         'group.groupName',
         'user.username',
+        'user.id',
         'suggestions',
       ])
       .getOne();
@@ -37,12 +37,12 @@ export class PollService {
 
   async createSuggestion(
     groupId: number,
-    targetUserId: number,
+    pollId: number,
     createSuggestionDto: CreateSuggestionDTO,
   ): Promise<Suggestion> {
     const poll = await this.pollRepository
       .createQueryBuilder('poll')
-      .where('poll.userId = :userId', { userId: targetUserId })
+      .where('poll.id = :pollId', { pollId })
       .andWhere('poll.groupId = :groupId', { groupId })
       .getOne();
 
@@ -57,10 +57,10 @@ export class PollService {
 
   async voteOnSuggestion(
     groupId: number,
-    targetUserId: number,
+    pollId: number,
     votePollDto: VotePollDTO,
   ): Promise<Suggestion> {
-    const poll = await this.getUserPoll(groupId, targetUserId);
+    const poll = await this.getUserPoll(groupId, pollId);
 
     const suggestion = await this.suggestionRepository
       .createQueryBuilder('suggestion')

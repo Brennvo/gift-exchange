@@ -39,7 +39,6 @@ describe('Poll service', () => {
     const mockWhere = jest.fn().mockReturnThis();
     pollRepository.createQueryBuilder = jest.fn().mockReturnValue({
       where: mockWhere,
-      andWhere: mockWhere,
       leftJoin: jest.fn().mockReturnThis(),
       innerJoin: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
@@ -48,8 +47,7 @@ describe('Poll service', () => {
 
     const res = await pollService.getUserPoll(5, 1);
     // Ensure database being queried with right data
-    expect(mockWhere.mock.calls[0][1].groupId).toBe(5);
-    expect(mockWhere.mock.calls[1][1].userId).toBe(1);
+    expect(mockWhere.mock.calls[0][1].pollId).toBe(1);
 
     // Ensure returning poll
     expect(res).toBe(mockPoll);
