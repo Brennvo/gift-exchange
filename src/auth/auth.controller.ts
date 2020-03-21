@@ -84,7 +84,7 @@ export class AuthController {
     res.cookie('npid', jwt, {
       httpOnly: true,
     });
-    res.redirect(this.CLIENT_URL);
+    res.redirect(`${this.CLIENT_URL}${this.authService.getReturnurl()}`);
   }
 
   @Get('/logout')

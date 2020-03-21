@@ -89,40 +89,36 @@ export class GroupController {
     return this.groupService.joinGroup(req.user, id, accessToken);
   }
 
-  @Get('/:groupId/poll/:targetUserId')
+  @Get('/:groupId/poll/:pollId')
   @UseGuards(PollGuard)
   getUserPoll(
     @Param('groupId', ParseIntPipe) groupId,
-    @Param('targetUserId', ParseIntPipe) targetUserId,
+    @Param('pollId', ParseIntPipe) pollId,
   ): Promise<any> {
-    return this.pollService.getUserPoll(groupId, targetUserId);
+    return this.pollService.getUserPoll(groupId, pollId);
   }
 
-  @Post('/:groupId/poll/:targetUserId')
+  @Post('/:groupId/poll/:pollId')
   @UseGuards(PollGuard)
   createSuggestion(
     @Param('groupId', ParseIntPipe) groupId,
-    @Param('targetUserId', ParseIntPipe) targetUserId,
+    @Param('pollId', ParseIntPipe) pollId,
     @Body() createSuggestionDto: CreateSuggestionDTO,
   ): Promise<Suggestion> {
     return this.pollService.createSuggestion(
       groupId,
-      targetUserId,
+      pollId,
       createSuggestionDto,
     );
   }
 
-  @Patch('/:groupId/poll/:targetUserId')
+  @Patch('/:groupId/poll/:pollId')
   @UseGuards(PollGuard)
   upvoteSuggestion(
     @Param('groupId', ParseIntPipe) groupId,
-    @Param('targetUserId', ParseIntPipe) targetUserId,
+    @Param('pollId', ParseIntPipe) pollId,
     @Body() votePollDto: VotePollDTO,
   ): Promise<Suggestion> {
-    return this.pollService.voteOnSuggestion(
-      groupId,
-      targetUserId,
-      votePollDto,
-    );
+    return this.pollService.voteOnSuggestion(groupId, pollId, votePollDto);
   }
 }

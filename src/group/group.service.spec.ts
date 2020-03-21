@@ -8,6 +8,7 @@ import {
   BadRequestException,
   UnauthorizedException,
   ConflictException,
+  NotFoundException,
 } from '@nestjs/common';
 import { GroupAccess } from '../entities/group_access.entity';
 import { EmailService } from '../email/email.service';
@@ -64,47 +65,51 @@ describe('GroupService', () => {
     groupAccessRepository = module.get(getRepositoryToken(GroupAccess));
   });
 
-  it('should create a group', async () => {
-    userRepository.findOne.mockResolvedValue(mockUser);
-    groupRepository.create.mockResolvedValue(mockGroup);
-    groupRepository.save.mockResolvedValue(true);
-    pollRepository.create.mockResolvedValue({
-      owner: mockUser,
-      group: mockGroup,
-    });
-    pollRepository.save.mockResolvedValue(true);
+  describe('creating a group', () => {
+    it('creates a new group', async () => {
+      userRepository.findOne.mockResolvedValue(mockUser);
+      groupRepository.create.mockResolvedValue(mockGroup);
+      groupRepository.save.mockResolvedValue(true);
+      pollRepository.create.mockResolvedValue({
+        owner: mockUser,
+        group: mockGroup,
+      });
+      pollRepository.save.mockResolvedValue(true);
 
-    const res = await groupService.createGroup(mockUser, {
-      groupName: 'test',
-      voteEndDate: '2020-01-01',
-    });
-    expect(res).toBe(mockGroup);
-  });
-
-  it('should create an access token for a group', async () => {
-    cryptoRandomString = jest.fn().mockReturnValue('mock string');
-    groupAccessRepository.create.mockResolvedValue('access');
-    await groupService.createGroupAccess(mockGroup);
-    expect(groupAccessRepository.create).toHaveBeenCalledTimes(1);
-    expect(groupAccessRepository.save).toHaveBeenCalledTimes(1);
-  });
-
-  it('should remove an access token for a particular email', async () => {
-    await groupService.revokeGroupAccess(1, 'testUser@test.com');
-    expect(groupAccessRepository.delete).toHaveBeenCalledWith({
-      groupId: 1,
-      email: 'testUser@test.com',
+      const res = await groupService.createGroup(mockUser, {
+        groupName: 'test',
+        voteEndDate: '2020-01-01',
+      });
+      expect(res).toBe(mockGroup);
     });
   });
 
-  it('should send an email to invite a new group participant', async () => {
-    groupRepository.findOne.mockReturnValue(mockGroup);
-    groupService.createGroupAccess = jest.fn().mockResolvedValue({
-      accessToken: 'mock token',
+  describe('managing group members', () => {
+    it('should create an access token for a group', async () => {
+      cryptoRandomString = jest.fn().mockReturnValue('mock string');
+      groupAccessRepository.create.mockResolvedValue('access');
+      await groupService.createGroupAccess(mockGroup);
+      expect(groupAccessRepository.create).toHaveBeenCalledTimes(1);
+      expect(groupAccessRepository.save).toHaveBeenCalledTimes(1);
     });
-    emailService.sendEmail = jest.fn().mockResolvedValue('sent email');
-    await groupService.inviteMember(mockUser, 1, 'testUser@test.com');
-    expect(emailService.sendEmail).toHaveBeenCalledTimes(1);
+
+    it('should remove an access token for a particular email', async () => {
+      await groupService.revokeGroupAccess(1, 'testUser@test.com');
+      expect(groupAccessRepository.delete).toHaveBeenCalledWith({
+        groupId: 1,
+        email: 'testUser@test.com',
+      });
+    });
+
+    it('should send an email to invite a new group participant', async () => {
+      groupRepository.findOne.mockReturnValue(mockGroup);
+      groupService.createGroupAccess = jest.fn().mockResolvedValue({
+        accessToken: 'mock token',
+      });
+      emailService.sendEmail = jest.fn().mockResolvedValue('sent email');
+      await groupService.inviteMember(mockUser, 1, 'testUser@test.com');
+      expect(emailService.sendEmail).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('getting group', () => {
@@ -112,6 +117,7 @@ describe('GroupService', () => {
       const mockInnerJoin = jest.fn().mockReturnThis();
       groupRepository.createQueryBuilder = jest.fn().mockReturnValue({
         innerJoin: mockInnerJoin,
+        leftJoin: mockInnerJoin,
         select: jest.fn().mockReturnThis(),
         innerJoinAndSelect: jest.fn().mockReturnThis(),
         getOne: jest.fn().mockReturnValue(mockGroup),
@@ -127,12 +133,23 @@ describe('GroupService', () => {
   });
 
   describe('joining a group', () => {
-    it('should add user to group if not already in group', async () => {
+    beforeEach(() => {
       groupRepository.findOne.mockResolvedValue(mockGroup);
       pollRepository.find.mockResolvedValue([{ userId: 2, groupId: 2 }]);
       pollRepository.create.mockReturnValue(true);
       pollRepository.save.mockResolvedValue(true);
-      const group = await groupService.joinGroup(mockUser, 1);
+      groupAccessRepository.findOne.mockResolvedValue({
+        email: 'mock@mock.com',
+      });
+      groupService.revokeGroupAccess = jest.fn();
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should create a new poll', async () => {
+      const group = await groupService.joinGroup(mockUser, 1, 'token');
       expect(pollRepository.create).toHaveBeenCalledWith({
         group: mockGroup,
         user: mockUser,
@@ -140,13 +157,25 @@ describe('GroupService', () => {
       expect(group).toBe(mockGroup);
     });
 
+    it('should revoke the access token', async () => {
+      await groupService.joinGroup(mockUser, 1, 'token');
+      expect(groupService.revokeGroupAccess).toHaveBeenCalledWith(
+        1,
+        'mock@mock.com',
+      );
+    });
+
     it('should throw exception if user already in group', async () => {
-      groupRepository.findOne.mockResolvedValue(mockGroup);
       pollRepository.find.mockResolvedValue([{ userId: 1, groupId: 1 }]);
-      pollRepository.create.mockReturnValue(true);
-      pollRepository.save.mockResolvedValue(true);
       await expect(groupService.joinGroup(mockUser, 1)).rejects.toThrow(
-        BadRequestException,
+        ConflictException,
+      );
+    });
+
+    it("should throw exception if user's group access is removed", async () => {
+      groupAccessRepository.findOne.mockResolvedValue(undefined);
+      await expect(groupService.joinGroup(mockUser, 1)).rejects.toThrow(
+        NotFoundException,
       );
     });
   });

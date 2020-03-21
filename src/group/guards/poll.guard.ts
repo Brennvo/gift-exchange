@@ -16,14 +16,15 @@ export class PollGuard implements CanActivate {
 
     const poll = await this.pollService.getUserPoll(
       params.groupId,
-      params.targetUserId,
+      params.pollId,
     );
 
     if (!poll) {
       throw new NotFoundException('Poll not found.');
     }
 
-    if (user.id == params.targetUserId) {
+    // TODO: restrict access from editing your own poll
+    if (user.id == poll.user.id) {
       throw new BadRequestException('Cannot access own poll');
     }
 
