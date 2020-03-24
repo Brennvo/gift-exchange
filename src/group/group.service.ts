@@ -156,8 +156,53 @@ export class GroupService {
    * @param group - group to join
    * @param email - email receiving access
    */
-  async revokeGroupAccess(groupId: number, email: string): Promise<any> {
-    return this.groupAccess.delete({ groupId, email });
+  async revokeGroupAccess(groupId: number, emails): Promise<any> {
+    //return this.groupAccess.delete({ groupId, email: (email) => });
+    return this.groupAccess
+      .createQueryBuilder()
+      .delete()
+      .where('groupId = :groupId', { groupId })
+      .andWhere('email IN (:...emails)', { emails })
+      .execute();
+  }
+
+  async revokeManyGroupAccess(groupId, emails): Promise<any> {
+    return this.groupAccess.delete({ email: emails });
+  }
+
+  async inviteMembers(user, groupId, emails): Promise<any> {
+    const group = await this.groupRepository.findOne(groupId);
+
+    // Create access tokens for each email
+    const accessTokens: GroupAccess[] = await Promise.all(
+      emails.map(async email => await this.createGroupAccess(group, email)),
+    );
+
+    const recipientVariables = emails.reduce((acc, currEmail, i) => {
+      const { accessToken } = accessTokens[i];
+      acc[currEmail] = { accessToken };
+      return acc;
+    }, {});
+
+    const html = `You're invited to partake in The North Poll! Come <a href="http://localhost:3000/group/${groupId}/join/%recipient.accessToken%">join ${group.groupName}</a> there now.`;
+
+    console.log('recip vars: ', recipientVariables);
+    console.log('html: ', html);
+
+    try {
+      await this.emailService.sendBatchEmail(
+        {
+          to: emails,
+          subject: `Your Vote Matters with The North Poll!`,
+          html: html,
+        },
+        recipientVariables,
+      );
+    } catch (e) {
+      console.log('e from service is: ', e);
+      await this.revokeGroupAccess(groupId, emails);
+      return new ServiceUnavailableException();
+    }
   }
 
   async inviteMember(user, groupId, email): Promise<any> {
@@ -173,7 +218,7 @@ export class GroupService {
         html: `You're invited to partake in The North Poll! Come <a href="http://localhost:3000/group/${groupId}/join/${accessToken}">join ${group.groupName}</a> there now.`,
       });
     } catch (e) {
-      await this.revokeGroupAccess(groupId, email);
+      await this.revokeGroupAccess(groupId, [email]);
       throw new ServiceUnavailableException();
     }
   }

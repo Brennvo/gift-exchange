@@ -71,13 +71,22 @@ export class GroupController {
     return this.groupService.inviteMember(req.user, id, email);
   }
 
+  @Post('/:id/inviteMembers')
+  inviteMembers(
+    @Request() req,
+    @Param('id', ParseIntPipe) id,
+    @Body('emails') emails,
+  ): Promise<any> {
+    return this.groupService.inviteMembers(req.user, id, emails);
+  }
+
   @Patch('/:id/revokeInvitation')
   revokeInvitation(
     @Request() req,
     @Param('id', ParseIntPipe) id,
     @Body('email') email,
   ): Promise<any> {
-    return this.groupService.revokeGroupAccess(id, email);
+    return this.groupService.revokeGroupAccess(id, [email]);
   }
 
   @Patch('/:id/join/:accessToken')
