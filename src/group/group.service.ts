@@ -6,14 +6,15 @@ import {
   ConflictException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import * as cryptoRandomString from 'crypto-random-string';
-import { CreateGroupDTO } from './dto/create-group.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as cryptoRandomString from 'crypto-random-string';
+
+import { CreateGroupDTO } from './dto/create-group.dto';
 import { UserGroupPoll } from '../entities/user-group-poll.entity';
 import { User } from '../entities/user.entity';
 import { Group } from '../entities/group.entity';
-import { GroupAccess } from '../entities/group_access.entity';
+import { Invitation } from '../entities/invitation.entity';
 import { EmailService } from '../email/email.service';
 
 @Injectable()
@@ -26,8 +27,8 @@ export class GroupService {
     private readonly groupRepository: Repository<Group>,
     @InjectRepository(UserGroupPoll)
     private readonly userGroupPollRepository: Repository<UserGroupPoll>,
-    @InjectRepository(GroupAccess)
-    private readonly groupAccess: Repository<GroupAccess>,
+    @InjectRepository(Invitation)
+    private readonly invitationRepository: Repository<Invitation>,
   ) {}
 
   async getUserGroups(user): Promise<Group[]> {
@@ -46,9 +47,14 @@ export class GroupService {
   async getGroupById(groupId): Promise<any> {
     const group = await this.groupRepository
       .createQueryBuilder('group')
-      .leftJoin('group.accessTokens', 'invites', 'invites.groupId = :groupId', {
-        groupId,
-      })
+      .leftJoin(
+        'group.invitations',
+        'invitations',
+        'invitations.groupId = :groupId',
+        {
+          groupId,
+        },
+      )
       .innerJoin(
         'group.userPolls',
         'userPolls',
@@ -63,7 +69,7 @@ export class GroupService {
         'group.ownerId',
         'group.voteEndDt',
         'userPolls.id',
-        'invites.email',
+        'invitations.email',
       ])
       .innerJoinAndSelect('userPolls.user', 'user')
       .getOne();
@@ -93,12 +99,9 @@ export class GroupService {
     return newGroup;
   }
 
-  async joinGroup(user, groupId, accessToken): Promise<Group> {
-    // Revoke access token
-    const groupAccess = await this.groupAccess.findOne({
-      where: { accessToken },
-    });
-
+  // Adds user to a group (through poll creation) if token is valid
+  async createPoll(user, groupId, token): Promise<Group> {
+    // Check if user attempting to join is already in group
     const groupPolls = await this.userGroupPollRepository.find({
       where: { groupId },
     });
@@ -107,19 +110,21 @@ export class GroupService {
       throw new ConflictException('User already in group.');
     }
 
-    if (!groupAccess) {
+    // Check if token is still valid
+    const invitation = await this.invitationRepository.findOne({
+      where: { token },
+    });
+
+    if (!invitation) {
       throw new NotFoundException('Sorry, that group was not found.');
     }
-    await this.revokeGroupAccess(groupId, groupAccess.email);
+
+    // Remove token before joining
+    await this.revokeInvitation(groupId, [invitation.email]);
 
     const group = await this.groupRepository.findOne(groupId);
 
-    // TODO: Check if access token is valid
-
-    // TODO: return BadRequestException with meaningful message of
-    // expired token (then potentially resend link)
-
-    // Create a new user poll
+    // Create a new poll for user in group
     const newUserPoll = this.userGroupPollRepository.create({
       group,
       user,
@@ -134,21 +139,21 @@ export class GroupService {
    * @param group - group to join
    * @param email - email receiving access
    */
-  async createGroupAccess(group: Group, email: string): Promise<GroupAccess> {
-    const accessToken = cryptoRandomString({ length: 16, type: 'url-safe' });
+  async createInvitation(group: Group, email: string): Promise<Invitation> {
+    const token = cryptoRandomString({ length: 16, type: 'url-safe' });
 
     // Expire date on token
     const expireDate = new Date();
     expireDate.setDate(expireDate.getDate() + 7);
 
-    const newToken = await this.groupAccess.create({
+    const newToken = await this.invitationRepository.create({
       email,
-      accessToken,
+      token,
       groupId: group.id,
       expireDate,
     });
 
-    return this.groupAccess.save(newToken);
+    return this.invitationRepository.save(newToken);
   }
 
   /**
@@ -156,9 +161,9 @@ export class GroupService {
    * @param group - group to join
    * @param email - email receiving access
    */
-  async revokeGroupAccess(groupId: number, emails): Promise<any> {
-    //return this.groupAccess.delete({ groupId, email: (email) => });
-    return this.groupAccess
+  async revokeInvitation(groupId: number, emails): Promise<any> {
+    //return this.invitationRepository.delete({ groupId, email: (email) => });
+    return this.invitationRepository
       .createQueryBuilder()
       .delete()
       .where('groupId = :groupId', { groupId })
@@ -166,28 +171,25 @@ export class GroupService {
       .execute();
   }
 
-  async revokeManyGroupAccess(groupId, emails): Promise<any> {
-    return this.groupAccess.delete({ email: emails });
+  async revokeManyInvitation(groupId, emails): Promise<any> {
+    return this.invitationRepository.delete({ email: emails });
   }
 
-  async inviteMembers(user, groupId, emails): Promise<any> {
+  async inviteMembers(groupId, emails): Promise<any> {
     const group = await this.groupRepository.findOne(groupId);
 
     // Create access tokens for each email
-    const accessTokens: GroupAccess[] = await Promise.all(
-      emails.map(async email => await this.createGroupAccess(group, email)),
+    const tokens: Invitation[] = await Promise.all(
+      emails.map(async email => await this.createInvitation(group, email)),
     );
 
     const recipientVariables = emails.reduce((acc, currEmail, i) => {
-      const { accessToken } = accessTokens[i];
-      acc[currEmail] = { accessToken };
+      const { token } = tokens[i];
+      acc[currEmail] = { token };
       return acc;
     }, {});
 
-    const html = `You're invited to partake in The North Poll! Come <a href="http://localhost:3000/group/${groupId}/join/%recipient.accessToken%">join ${group.groupName}</a> there now.`;
-
-    console.log('recip vars: ', recipientVariables);
-    console.log('html: ', html);
+    const html = `You're invited to partake in The North Poll! Come <a href="http://localhost:3000/group/${groupId}/join/%recipient.token%">join ${group.groupName}</a> there now.`;
 
     try {
       await this.emailService.sendBatchEmail(
@@ -199,15 +201,14 @@ export class GroupService {
         recipientVariables,
       );
     } catch (e) {
-      console.log('e from service is: ', e);
-      await this.revokeGroupAccess(groupId, emails);
-      return new ServiceUnavailableException();
+      await this.revokeInvitation(groupId, emails);
+      throw new ServiceUnavailableException();
     }
   }
 
   async inviteMember(user, groupId, email): Promise<any> {
     const group = await this.groupRepository.findOne(groupId);
-    const { accessToken } = await this.createGroupAccess(group, email);
+    const { token } = await this.createInvitation(group, email);
 
     // TODO: send email with access token embedded in URL
     // newEmails is an array of emails
@@ -215,10 +216,10 @@ export class GroupService {
       await this.emailService.sendEmail({
         to: email,
         subject: `Your Vote Matters with The North Poll!`,
-        html: `You're invited to partake in The North Poll! Come <a href="http://localhost:3000/group/${groupId}/join/${accessToken}">join ${group.groupName}</a> there now.`,
+        html: `You're invited to partake in The North Poll! Come <a href="http://localhost:3000/group/${groupId}/join/${token}">join ${group.groupName}</a> there now.`,
       });
     } catch (e) {
-      await this.revokeGroupAccess(groupId, [email]);
+      await this.revokeInvitation(groupId, [email]);
       throw new ServiceUnavailableException();
     }
   }

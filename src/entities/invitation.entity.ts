@@ -8,7 +8,7 @@ import {
 import { Group } from './group.entity';
 
 @Entity()
-export class GroupAccess {
+export class Invitation {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -16,7 +16,7 @@ export class GroupAccess {
   email: string;
 
   @Column()
-  accessToken: string;
+  token: string;
 
   @Column()
   expireDate: Date;
@@ -25,7 +25,7 @@ export class GroupAccess {
   groupId: number;
   @ManyToOne(
     type => Group,
-    group => group.accessTokens,
+    group => group.invitations,
   )
   @JoinColumn({ name: 'groupId' })
   group: Group;
