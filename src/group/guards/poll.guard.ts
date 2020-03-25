@@ -5,19 +5,21 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { PollService } from '../poll.service';
+import { PollService } from '../poll/poll.service';
+import { GroupService } from '../group.service';
 
 @Injectable()
 export class PollGuard implements CanActivate {
-  constructor(private readonly pollService: PollService) {}
+  constructor(
+    private readonly pollService: PollService,
+    private readonly groupService: GroupService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const { user, params } = context.switchToHttp().getRequest();
 
-    const poll = await this.pollService.getUserPoll(
-      params.groupId,
-      params.pollId,
-    );
+    const poll = await this.pollService.getUserPoll(params.groupId);
+    const group = await this.groupService.getGroupById(poll.groupId);
 
     if (!poll) {
       throw new NotFoundException('Poll not found.');

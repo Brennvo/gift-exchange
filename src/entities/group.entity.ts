@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { UserGroupPoll } from './user-group-poll.entity';
-import { GroupAccess } from './group_access.entity';
+import { Invitation } from './invitation.entity';
 
 @Entity()
 export class Group {
@@ -37,8 +37,8 @@ export class Group {
   userPolls: UserGroupPoll[];
 
   @OneToMany(
-    type => GroupAccess,
-    groupAccess => groupAccess.group,
+    type => Invitation,
+    invitation => invitation.group,
   )
-  accessTokens: GroupAccess[];
+  invitations: Invitation[];
 }

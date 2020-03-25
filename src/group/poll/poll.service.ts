@@ -1,10 +1,10 @@
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateSuggestionDTO } from './dto/create-suggestion.dto';
-import { VotePollDTO } from './dto/vote-poll.dto';
-import { UserGroupPoll } from '../entities/user-group-poll.entity';
-import { Suggestion } from '../entities/suggestion.entity';
+import { CreateSuggestionDTO } from '../dto/create-suggestion.dto';
+import { UserGroupPoll } from '../../entities/user-group-poll.entity';
+import { Suggestion } from '../../entities/suggestion.entity';
+import { VoteType } from '../enums/VoteType.enum';
 
 @Injectable()
 export class PollService {
@@ -15,7 +15,7 @@ export class PollService {
     private readonly suggestionRepository: Repository<Suggestion>,
   ) {}
 
-  async getUserPoll(groupId, pollId) {
+  async getUserPoll(pollId) {
     const poll = await this.pollRepository
       .createQueryBuilder('poll')
       .where('poll.id = :pollId', { pollId })
@@ -36,14 +36,12 @@ export class PollService {
   }
 
   async createSuggestion(
-    groupId: number,
     pollId: number,
     createSuggestionDto: CreateSuggestionDTO,
   ): Promise<Suggestion> {
     const poll = await this.pollRepository
       .createQueryBuilder('poll')
       .where('poll.id = :pollId', { pollId })
-      .andWhere('poll.groupId = :groupId', { groupId })
       .getOne();
 
     const newSuggestion = await this.suggestionRepository.create({
@@ -55,31 +53,37 @@ export class PollService {
     return await this.suggestionRepository.save(newSuggestion);
   }
 
-  async voteOnSuggestion(
-    groupId: number,
-    pollId: number,
-    votePollDto: VotePollDTO,
+  async updateSuggestion(
+    suggestionId,
+    updateSuggestionDTO,
   ): Promise<Suggestion> {
-    const poll = await this.getUserPoll(groupId, pollId);
+    return updateSuggestionDTO.upvote
+      ? this.upvoteSuggestion(updateSuggestionDTO.id)
+      : this.downvoteSuggestion(updateSuggestionDTO.id);
+  }
 
-    const suggestion = await this.suggestionRepository
-      .createQueryBuilder('suggestion')
-      .where('suggestion.pollId = :pollId', { pollId: poll.id })
-      .andWhere('suggestion.id = :suggestionId', {
-        suggestionId: votePollDto.id,
-      })
-      .getOne();
-
+  async upvoteSuggestion(suggestionId): Promise<Suggestion> {
+    const suggestion = await this.suggestionRepository.findOne(suggestionId);
     if (!suggestion) {
-      throw new NotFoundException(`Suggestion not found for poll ${poll.id}`);
+      throw new NotFoundException('Suggestion not found');
     }
 
-    suggestion.votes = votePollDto.upvote
-      ? suggestion.votes + 1
-      : suggestion.votes - 1;
+    suggestion.votes = suggestion.votes + 1;
+    return this.suggestionRepository.save(suggestion);
+  }
 
-    await this.suggestionRepository.save(suggestion);
+  async downvoteSuggestion(suggestionId): Promise<Suggestion> {
+    const suggestion = await this.suggestionRepository.findOne(suggestionId);
 
-    return suggestion;
+    if (!suggestion) {
+      throw new NotFoundException('Suggestion not found');
+    }
+
+    if (suggestion.votes === 0) {
+      return Promise.resolve(suggestion);
+    }
+
+    suggestion.votes = suggestion.votes - 1;
+    return this.suggestionRepository.save(suggestion);
   }
 }

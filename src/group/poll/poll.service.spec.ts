@@ -1,8 +1,8 @@
 import { TestingModule, Test } from '@nestjs/testing';
 import { PollService } from './poll.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { UserGroupPoll } from '../entities/user-group-poll.entity';
-import { Suggestion } from '../entities/suggestion.entity';
+import { UserGroupPoll } from '../../entities/user-group-poll.entity';
+import { Suggestion } from '../../entities/suggestion.entity';
 import { NotFoundException } from '@nestjs/common';
 
 const mockRepository = () => ({

@@ -1,6 +1,6 @@
 import { TestingModule, Test } from '@nestjs/testing';
 import { PollGuard } from './poll.guard';
-import { PollService } from '../poll.service';
+import { PollService } from '../poll/poll.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('Poll guard tests', () => {
