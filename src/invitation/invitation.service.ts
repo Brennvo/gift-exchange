@@ -14,6 +14,29 @@ export class InvitationService {
     private readonly emailService: EmailService,
   ) {}
 
+  // Create a new invitation for an email in a group
+  private async createInvitation(groupId, email) {
+    const token = this.generateToken();
+
+    // Expire date on token
+    const expireDate = new Date();
+    expireDate.setDate(expireDate.getDate() + 7);
+
+    const newToken = await this.invitationRepository.create({
+      email,
+      token,
+      groupId,
+      expireDate,
+    });
+
+    return this.invitationRepository.save(newToken);
+  }
+
+  // Invitatino token generation helper
+  private generateToken(): string {
+    return cryptoRandomString({ length: 16, type: 'url-safe' });
+  }
+
   // Send unique invitations to emails
   async sendInvitations(groupId, groupName, emails): Promise<any> {
     const invitations: Invitation[] = await Promise.all(
@@ -42,7 +65,7 @@ export class InvitationService {
   }
 
   // Create text for invitation email
-  invitationText(groupId, groupName): string {
+  private invitationText(groupId, groupName): string {
     return `You're invited to vote in The North Poll! <a href="http://localhost:3000/group/${groupId}/join/%recipient.token%">Join ${groupName}</a> there now.`;
   }
 
@@ -53,24 +76,6 @@ export class InvitationService {
     });
 
     return invitation ? true : false;
-  }
-
-  // Create a new invitation for an email in a group
-  async createInvitation(groupId, email) {
-    const token = this.generateToken();
-
-    // Expire date on token
-    const expireDate = new Date();
-    expireDate.setDate(expireDate.getDate() + 7);
-
-    const newToken = await this.invitationRepository.create({
-      email,
-      token,
-      groupId,
-      expireDate,
-    });
-
-    return this.invitationRepository.save(newToken);
   }
 
   // Revokes existing invitations
@@ -89,16 +94,5 @@ export class InvitationService {
       .delete()
       .where('token = :token', { token })
       .execute();
-  }
-
-  // Invitation expiration date helper
-  setExpireDate(today: Date): number {
-    const expiredDate = today.setDate(today.getDate() + 7);
-    return expiredDate;
-  }
-
-  // Invitatino token generation helper
-  generateToken(): string {
-    return cryptoRandomString({ length: 16, type: 'url-safe' });
   }
 }
