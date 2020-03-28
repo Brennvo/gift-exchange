@@ -19,14 +19,14 @@ import { GroupService } from './group.service';
 import { UpdateGroupDTO } from './dto/update-group.dto';
 import { GroupGuard } from './guards/group.guard';
 import { Group } from '../entities/group.entity';
-import { PollService } from './poll/poll.service';
+import { InvitationService } from '../invitation/invitation.service';
 
 @UseGuards(AuthGuard('jwt'), GroupGuard)
 @Controller('group')
 export class GroupController {
   constructor(
     private groupService: GroupService,
-    private readonly pollService: PollService,
+    private readonly invitationService: InvitationService,
   ) {}
 
   // Create a new group
@@ -66,7 +66,7 @@ export class GroupController {
 
   // Creates invitation(s) for a group
   @Post('/:groupId/invitation')
-  createInvitations(
+  inviteMembers(
     @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
     @Body('emails') emails: string[],
@@ -81,7 +81,7 @@ export class GroupController {
     @Param('groupId', ParseIntPipe) groupId,
     @Body('emails') emails: string[],
   ) {
-    return this.groupService.revokeInvitation(groupId, emails);
+    return this.invitationService.revokeInvitations(groupId, emails);
   }
 
   // Adds a member to a group with a valid token by creating a poll

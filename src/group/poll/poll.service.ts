@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { CreateSuggestionDTO } from '../dto/create-suggestion.dto';
 import { UserGroupPoll } from '../../entities/user-group-poll.entity';
 import { Suggestion } from '../../entities/suggestion.entity';
-import { VoteType } from '../enums/VoteType.enum';
 
 @Injectable()
 export class PollService {
@@ -53,10 +52,7 @@ export class PollService {
     return await this.suggestionRepository.save(newSuggestion);
   }
 
-  async updateSuggestion(
-    suggestionId,
-    updateSuggestionDTO,
-  ): Promise<Suggestion> {
+  async updateSuggestion(pollId, updateSuggestionDTO): Promise<Suggestion> {
     return updateSuggestionDTO.upvote
       ? this.upvoteSuggestion(updateSuggestionDTO.id)
       : this.downvoteSuggestion(updateSuggestionDTO.id);
