@@ -10,6 +10,7 @@ import { EmailModule } from '../email/email.module';
 import { PollController } from './poll/poll.controller';
 import { Invitation } from '../entities/invitation.entity';
 import { PollService } from './poll/poll.service';
+import { InvitationModule } from '../invitation/invitation.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PollService } from './poll/poll.service';
       Invitation,
     ]),
     EmailModule,
+    InvitationModule,
   ],
   controllers: [GroupController, PollController],
   providers: [PollService, GroupService],
