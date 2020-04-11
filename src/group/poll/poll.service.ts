@@ -46,40 +46,39 @@ export class PollService {
     const newSuggestion = await this.suggestionRepository.create({
       ...createSuggestionDto,
       poll,
-      votes: 0,
     });
 
     return await this.suggestionRepository.save(newSuggestion);
   }
 
-  async updateSuggestion(pollId, updateSuggestionDTO): Promise<Suggestion> {
-    return updateSuggestionDTO.upvote
-      ? this.upvoteSuggestion(updateSuggestionDTO.id)
-      : this.downvoteSuggestion(updateSuggestionDTO.id);
-  }
+  // async updateSuggestion(pollId, updateSuggestionDTO): Promise<Suggestion> {
+  //   return updateSuggestionDTO.upvote
+  //     ? this.upvoteSuggestion(updateSuggestionDTO.id)
+  //     : this.downvoteSuggestion(updateSuggestionDTO.id);
+  // }
 
-  async upvoteSuggestion(suggestionId): Promise<Suggestion> {
-    const suggestion = await this.suggestionRepository.findOne(suggestionId);
-    if (!suggestion) {
-      throw new NotFoundException('Suggestion not found');
-    }
+  // async upvoteSuggestion(suggestionId): Promise<Suggestion> {
+  //   const suggestion = await this.suggestionRepository.findOne(suggestionId);
+  //   if (!suggestion) {
+  //     throw new NotFoundException('Suggestion not found');
+  //   }
 
-    suggestion.votes = suggestion.votes + 1;
-    return this.suggestionRepository.save(suggestion);
-  }
+  //   suggestion.votes = suggestion.votes + 1;
+  //   return this.suggestionRepository.save(suggestion);
+  // }
 
-  async downvoteSuggestion(suggestionId): Promise<Suggestion> {
-    const suggestion = await this.suggestionRepository.findOne(suggestionId);
+  // async downvoteSuggestion(suggestionId): Promise<Suggestion> {
+  //   const suggestion = await this.suggestionRepository.findOne(suggestionId);
 
-    if (!suggestion) {
-      throw new NotFoundException('Suggestion not found');
-    }
+  //   if (!suggestion) {
+  //     throw new NotFoundException('Suggestion not found');
+  //   }
 
-    if (suggestion.votes === 0) {
-      return Promise.resolve(suggestion);
-    }
+  //   if (suggestion.votes === 0) {
+  //     return Promise.resolve(suggestion);
+  //   }
 
-    suggestion.votes = suggestion.votes - 1;
-    return this.suggestionRepository.save(suggestion);
-  }
+  //   suggestion.votes = suggestion.votes - 1;
+  //   return this.suggestionRepository.save(suggestion);
+  // }
 }

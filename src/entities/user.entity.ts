@@ -1,12 +1,7 @@
-import {
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToMany,
-  Entity,
-  OneToMany,
-} from 'typeorm';
+import { PrimaryGeneratedColumn, Column, Entity, OneToMany } from 'typeorm';
 import { Group } from './group.entity';
 import { UserGroupPoll } from './user-group-poll.entity';
+import { Vote } from './vote.entity';
 
 @Entity()
 export class User {
@@ -33,4 +28,10 @@ export class User {
     userGroupPoll => userGroupPoll.user,
   )
   userPolls: UserGroupPoll[];
+
+  @OneToMany(
+    type => Vote,
+    vote => vote.user,
+  )
+  votes: Vote[];
 }

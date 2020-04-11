@@ -22,6 +22,12 @@ export class Group {
   voteEndDt: Date;
 
   @Column()
+  minPrice: number;
+
+  @Column()
+  maxPrice: number;
+
+  @Column()
   ownerId: number;
   @ManyToOne(
     type => User,

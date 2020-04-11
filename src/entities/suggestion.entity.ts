@@ -4,8 +4,10 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { UserGroupPoll } from './user-group-poll.entity';
+import { Vote } from './vote.entity';
 
 @Entity()
 export class Suggestion {
@@ -15,14 +17,20 @@ export class Suggestion {
   @Column()
   title: string;
 
+  @Column()
+  price: number;
+
   @Column({ nullable: true })
   description: string;
 
   @Column({ nullable: true })
   link: string;
 
-  @Column()
-  votes: number;
+  @OneToMany(
+    type => Vote,
+    vote => vote.suggestions,
+  )
+  votes: Vote[];
 
   @Column()
   pollId: number;
