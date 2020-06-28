@@ -9,4 +9,7 @@ export class CreateSuggestionDTO {
 
   @IsOptional()
   link: string;
+
+  @IsOptional()
+  price: number;
 }

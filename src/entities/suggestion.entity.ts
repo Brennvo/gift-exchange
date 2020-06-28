@@ -17,7 +17,7 @@ export class Suggestion {
   @Column()
   title: string;
 
-  @Column()
+  @Column({ nullable: true })
   price: number;
 
   @Column({ nullable: true })

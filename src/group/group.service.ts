@@ -63,6 +63,8 @@ export class GroupService {
         'group.groupName',
         'group.ownerId',
         'group.voteEndDt',
+        'group.minPrice',
+        'group.maxPrice',
         'userPolls.id',
         'invitations.email',
       ])
@@ -73,12 +75,16 @@ export class GroupService {
   }
 
   async createGroup(user, createGroupDto: CreateGroupDTO): Promise<Group> {
-    const { groupName, voteEndDt, emails } = createGroupDto;
+    const { groupName, voteEndDt, emails, minPrice, maxPrice } = createGroupDto;
     const owner = await this.userRepository.findOne(user.id);
+
+    // TODO: check if minimum price and maximum price are set
 
     // Create new group with owner
     const newGroup = await this.groupRepository.create({
       groupName,
+      minPrice: minPrice || null,
+      maxPrice: maxPrice || null,
       voteEndDt: new Date(voteEndDt),
       owner,
     });
@@ -91,7 +97,7 @@ export class GroupService {
     });
     await this.userGroupPollRepository.save(userPoll);
 
-    if (createGroupDto.emails.length > 0) {
+    if (createGroupDto.emails && createGroupDto.emails.length > 0) {
       await this.invitationService.sendInvitations(group.id, groupName, emails);
     }
 

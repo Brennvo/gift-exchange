@@ -11,6 +11,7 @@ import { PollController } from './poll/poll.controller';
 import { Invitation } from '../entities/invitation.entity';
 import { PollService } from './poll/poll.service';
 import { InvitationModule } from '../invitation/invitation.module';
+import { Vote } from '../entities/vote.entity';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { InvitationModule } from '../invitation/invitation.module';
       UserGroupPoll,
       Suggestion,
       Invitation,
+      Vote,
     ]),
     EmailModule,
     InvitationModule,

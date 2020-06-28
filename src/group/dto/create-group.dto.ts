@@ -7,10 +7,10 @@ export class CreateGroupDTO {
   @IsNotEmpty()
   voteEndDt: Date;
 
-  @IsNotEmpty()
+  @IsOptional()
   minPrice: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   maxPrice: number;
 
   @IsOptional()

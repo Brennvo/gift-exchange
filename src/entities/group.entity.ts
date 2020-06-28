@@ -21,10 +21,10 @@ export class Group {
   @Column()
   voteEndDt: Date;
 
-  @Column()
+  @Column({ nullable: true })
   minPrice: number;
 
-  @Column()
+  @Column({ nullable: true })
   maxPrice: number;
 
   @Column()
