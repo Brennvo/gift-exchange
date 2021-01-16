@@ -51,7 +51,7 @@ export class GroupController {
     @Request() req,
     @Param('groupId', ParseIntPipe) groupId,
   ): Promise<any> {
-    return this.groupService.getGroupById(groupId);
+    return this.groupService.getGroupById(req.user, groupId);
   }
 
   // Updates group data

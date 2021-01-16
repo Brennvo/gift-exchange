@@ -25,7 +25,7 @@ describe('Group guard tests', () => {
     groupService = await module.get(GroupService);
   });
 
-  describe('guard permits access', () => {
+  describe('permits access', () => {
     it('should return true if no group is being request', async () => {
       context = {
         switchToHttp: jest.fn().mockReturnValue({
@@ -38,7 +38,27 @@ describe('Group guard tests', () => {
       expect(res).toBe(true);
     });
 
-    it('should return true if group exists and user in group', async () => {
+    it('should return true if the requesting user is the owner of the group', async () => {
+      context = {
+        switchToHttp: jest.fn().mockReturnValue({
+          getRequest: jest.fn().mockReturnValue({
+            params: { groupId: 1 },
+            user: { id: 1 },
+          }),
+        }),
+      };
+
+      groupService.getGroupById.mockResolvedValue({
+        owner: { id: 1 },
+        polls: [],
+      });
+
+      const res = await groupGuard.canActivate(context);
+
+      expect(res).toBe(true);
+    });
+
+    it('should return true if the requesting user is a participant of the group', async () => {
       context = {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: jest.fn().mockReturnValue({
@@ -48,14 +68,15 @@ describe('Group guard tests', () => {
         }),
       };
       groupService.getGroupById.mockResolvedValue({
-        userPolls: [{ user: { id: 1 } }],
+        owner: { id: 3 },
+        polls: [{ user: { id: 1 } }],
       });
       const res = await groupGuard.canActivate(context);
       expect(res).toBe(true);
     });
   });
 
-  describe('guard prohibits access', () => {
+  describe('prohibits access', () => {
     it('should return false if group not found', async () => {
       context = {
         switchToHttp: jest.fn().mockReturnValue({
@@ -81,7 +102,8 @@ describe('Group guard tests', () => {
         }),
       };
       groupService.getGroupById.mockResolvedValue({
-        userPolls: [{ user: { id: 99 } }],
+        owner: { id: 3 },
+        polls: [{ user: { id: 99 } }],
       });
       await expect(groupGuard.canActivate(context)).rejects.toThrow(
         NotFoundException,
