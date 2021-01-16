@@ -2,17 +2,17 @@ import { IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateGroupDTO {
   @IsNotEmpty()
-  groupName: string;
+  name: string;
 
   @IsNotEmpty()
-  voteEndDt: Date;
+  votingEndDate: Date;
+
+  @IsNotEmpty()
+  shouldCreatePoll: boolean;
 
   @IsOptional()
-  minPrice: number;
-
-  @IsOptional()
-  maxPrice: number;
-
-  @IsOptional()
-  emails: string[];
+  spendingLimit: null | {
+    minPrice: number;
+    maxPrice: number;
+  };
 }

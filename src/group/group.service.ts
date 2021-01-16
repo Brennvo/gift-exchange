@@ -26,82 +26,100 @@ export class GroupService {
     private readonly userGroupPollRepository: Repository<UserGroupPoll>,
   ) {}
 
-  async getUserGroups(user): Promise<Group[]> {
+  async createGroup(user, createGroupDto: CreateGroupDTO): Promise<Group> {
+    const {
+      name,
+      votingEndDate,
+      spendingLimit,
+      shouldCreatePoll,
+    } = createGroupDto;
+    const owner = await this.userRepository.findOne(user.id);
+
+    const newGroup = await this.groupRepository.create({
+      name,
+      minPrice: spendingLimit ? spendingLimit.minPrice : null,
+      maxPrice: spendingLimit ? spendingLimit.maxPrice : null,
+      voteEndDt: votingEndDate,
+      owner,
+    });
+    await this.groupRepository.save(newGroup);
+
+    if (shouldCreatePoll) {
+      const userPoll = await this.userGroupPollRepository.create({
+        user,
+        group: newGroup,
+      });
+      await this.userGroupPollRepository.save(userPoll);
+    }
+
+    return newGroup;
+  }
+
+  async getUserGroups(user): Promise<any> {
     const { id: userId } = user;
 
     const groups = await this.groupRepository
+      // .createQueryBuilder('group')
+      // .innerJoin('group.polls', 'userPoll', 'userPoll.userId = :userId', {
+      //   userId,
+      // })
+      // .getMany();
       .createQueryBuilder('group')
-      .innerJoin('group.userPolls', 'userPoll', 'userPoll.userId = :userId', {
+      .innerJoin('group.polls', 'userPoll', 'userPoll.userId = :userId', {
         userId,
       })
+      .leftJoin('group.invitations', 'invitations')
+      .innerJoin('group.polls', 'polls')
+      .select([
+        'group.id',
+        'group.name',
+        'group.ownerId',
+        'group.voteEndDt',
+        'group.minPrice',
+        'group.maxPrice',
+        'polls.id',
+        'invitations.email',
+      ])
+      .innerJoinAndSelect('polls.user', 'user')
       .getMany();
 
     return groups;
   }
 
-  async getGroupById(groupId): Promise<any> {
+  async getGroupById(user, groupId): Promise<any> {
     const group = await this.groupRepository
       .createQueryBuilder('group')
       .leftJoin(
         'group.invitations',
         'invitations',
         'invitations.groupId = :groupId',
-        {
-          groupId,
-        },
+        { groupId },
       )
-      .innerJoin(
-        'group.userPolls',
-        'userPolls',
-        'userPolls.groupId = :groupId',
-        {
-          groupId,
-        },
-      )
+      .leftJoin('group.polls', 'polls', 'polls.groupId = :groupId', {
+        groupId,
+      })
+      .innerJoin('group.owner', 'owner')
+      .innerJoin('polls.user', 'pollUser')
+      .leftJoin('polls.suggestions', 'suggestions')
+      .leftJoin('suggestions.votes', 'votes')
       .select([
         'group.id',
-        'group.groupName',
-        'group.ownerId',
+        'group.name',
+        'owner.id',
+        'owner.username',
         'group.voteEndDt',
         'group.minPrice',
         'group.maxPrice',
-        'userPolls.id',
-        'invitations.email',
+        'polls.id',
+        'suggestions',
+        'pollUser.id',
+        'pollUser.username',
+        'votes',
       ])
-      .innerJoinAndSelect('userPolls.user', 'user')
+      //.where('pollUser.id != :ownerId', { ownerId: user.id })
       .getOne();
 
     return group;
-  }
-
-  async createGroup(user, createGroupDto: CreateGroupDTO): Promise<Group> {
-    const { groupName, voteEndDt, emails, minPrice, maxPrice } = createGroupDto;
-    const owner = await this.userRepository.findOne(user.id);
-
-    // TODO: check if minimum price and maximum price are set
-
-    // Create new group with owner
-    const newGroup = await this.groupRepository.create({
-      groupName,
-      minPrice: minPrice || null,
-      maxPrice: maxPrice || null,
-      voteEndDt: new Date(voteEndDt),
-      owner,
-    });
-    const group = await this.groupRepository.save(newGroup);
-
-    // Create a poll for this user (owner) in the group
-    const userPoll = this.userGroupPollRepository.create({
-      user,
-      group,
-    });
-    await this.userGroupPollRepository.save(userPoll);
-
-    if (createGroupDto.emails && createGroupDto.emails.length > 0) {
-      await this.invitationService.sendInvitations(group.id, groupName, emails);
-    }
-
-    return newGroup;
   }
 
   // Adds user to a group (through poll creation) if token is valid
@@ -139,11 +157,7 @@ export class GroupService {
   async inviteMembers(groupId: number, emails: string[]): Promise<any> {
     const group: Group = await this.groupRepository.findOne(groupId);
 
-    return this.invitationService.sendInvitations(
-      groupId,
-      group.groupName,
-      emails,
-    );
+    return this.invitationService.sendInvitations(groupId, group.name, emails);
   }
 
   async updateGroup(user, groupId, updateGroupDto): Promise<Group> {
@@ -162,7 +176,7 @@ export class GroupService {
     }
 
     if (groupName) {
-      group.groupName = groupName;
+      group.name = groupName;
     }
 
     if (voteEndDt) {
