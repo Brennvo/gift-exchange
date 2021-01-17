@@ -165,6 +165,15 @@ describe('GroupService', () => {
     });
   });
 
+  describe('when deleting a group', () => {
+    it('should successfully delete by an id', async () => {
+      groupRepository.delete.mockResolvedValue(true);
+      await groupService.deleteGroup(1);
+
+      expect(groupRepository.delete).toHaveBeenCalledWith(1);
+    });
+  });
+
   // describe('managing group members', () => {
   //   it('should create an access token for a group', async () => {
   //     cryptoRandomString = jest.fn().mockReturnValue('mock string');

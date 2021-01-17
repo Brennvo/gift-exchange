@@ -30,13 +30,16 @@ export class GroupGuard implements CanActivate {
 
     // User is not trying to access a specific group or is trying to create a
     // new one (which does not require permission)
-    if (!params.groupId && method !== 'POST') {
-      console.log('no group id in params');
+    if ((!params.groupId && method !== 'POST') || method === 'POST') {
+      console.log(`[GROUP GUARD] - ${method} request permitted.`);
       return true;
     }
     const group = await this.groupService.getGroupById(user, params.groupId);
 
     if (!group || !this.hasPermission(user, group)) {
+      console.log(
+        `[GROUP GUARD] - ${method} request for ${params.groupId} prohibited.`,
+      );
       throw new NotFoundException('Group not found.');
     }
 

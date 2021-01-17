@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   ConflictException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -53,6 +54,17 @@ export class GroupService {
     }
 
     return newGroup;
+  }
+
+  async deleteGroup(id): Promise<boolean> {
+    try {
+      await this.groupRepository.delete(id);
+      return true;
+    } catch (e) {
+      console.log(`[POLL CONTROLLER] - failed to delete ${id}.`);
+      console.log(e);
+      throw new InternalServerErrorException('Delete failed');
+    }
   }
 
   async getUserGroups(user): Promise<any> {

@@ -25,11 +25,12 @@ describe('Group guard tests', () => {
     groupService = await module.get(GroupService);
   });
 
-  describe('permits access', () => {
-    it('should return true if no group is being request', async () => {
+  describe('wehen permitting access', () => {
+    it('should return true if no specific group is being requested', async () => {
       context = {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: jest.fn().mockReturnValue({
+            method: 'GET',
             params: {},
           }),
         }),
@@ -38,10 +39,11 @@ describe('Group guard tests', () => {
       expect(res).toBe(true);
     });
 
-    it('should return true if the requesting user is the owner of the group', async () => {
+    it('should return true if the user is the owner', async () => {
       context = {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: jest.fn().mockReturnValue({
+            method: 'GET',
             params: { groupId: 1 },
             user: { id: 1 },
           }),
@@ -58,10 +60,11 @@ describe('Group guard tests', () => {
       expect(res).toBe(true);
     });
 
-    it('should return true if the requesting user is a participant of the group', async () => {
+    it('should return true if the user is a participant', async () => {
       context = {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: jest.fn().mockReturnValue({
+            method: 'GET',
             params: { groupId: 1 },
             user: { id: 1 },
           }),
@@ -74,10 +77,24 @@ describe('Group guard tests', () => {
       const res = await groupGuard.canActivate(context);
       expect(res).toBe(true);
     });
+
+    it('should return true if the user is creaeting a new group', async () => {
+      context = {
+        switchToHttp: jest.fn().mockReturnValue({
+          getRequest: jest.fn().mockReturnValue({
+            method: 'POST',
+            params: { groupId: null },
+          }),
+        }),
+      };
+
+      const res = await groupGuard.canActivate(context);
+      expect(res).toBe(true);
+    });
   });
 
-  describe('prohibits access', () => {
-    it('should return false if group not found', async () => {
+  describe('when prohibiting access', () => {
+    it('should return false if the group does not exist', async () => {
       context = {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: jest.fn().mockReturnValue({
@@ -92,7 +109,7 @@ describe('Group guard tests', () => {
       );
     });
 
-    it('should return false if user not in group being request', async () => {
+    it('should return false if the user is not a participant', async () => {
       context = {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: jest.fn().mockReturnValue({

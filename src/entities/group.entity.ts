@@ -16,7 +16,7 @@ export class Group {
   id: number;
 
   @Column()
-  groupName: string;
+  name: string;
 
   @Column()
   voteEndDt: Date;
@@ -39,12 +39,18 @@ export class Group {
   @OneToMany(
     type => UserGroupPoll,
     userGroupPoll => userGroupPoll.group,
+    {
+      onDelete: 'CASCADE',
+    },
   )
-  userPolls: UserGroupPoll[];
+  polls: UserGroupPoll[];
 
   @OneToMany(
     type => Invitation,
     invitation => invitation.group,
+    {
+      onDelete: 'CASCADE',
+    },
   )
   invitations: Invitation[];
 }

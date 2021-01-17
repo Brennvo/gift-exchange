@@ -39,6 +39,14 @@ export class GroupController {
     return this.groupService.createGroup(req.user, createGroupDto);
   }
 
+  @Delete('/:groupId')
+  deleteGroup(
+    @Request() req,
+    @Param('groupId', ParseIntPipe) groupId,
+  ): Promise<boolean> {
+    return this.groupService.deleteGroup(groupId);
+  }
+
   // Return all groups associated with a user
   @Get()
   getGroups(@Request() req): Promise<Group[]> {

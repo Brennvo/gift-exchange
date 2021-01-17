@@ -26,6 +26,9 @@ export class Invitation {
   @ManyToOne(
     type => Group,
     group => group.invitations,
+    {
+      onDelete: 'CASCADE',
+    },
   )
   @JoinColumn({ name: 'groupId' })
   group: Group;

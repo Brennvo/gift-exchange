@@ -25,7 +25,7 @@ export class UserGroupPoll {
   userId: number;
   @ManyToOne(
     type => User,
-    user => user.userPolls,
+    user => user.polls,
   )
   @JoinColumn({ name: 'userId' })
   user: User;
@@ -34,7 +34,10 @@ export class UserGroupPoll {
   groupId: number;
   @ManyToOne(
     type => Group,
-    group => group.userPolls,
+    group => group.polls,
+    {
+      onDelete: 'CASCADE',
+    },
   )
   @JoinColumn({ name: 'groupId' })
   group: Group;
